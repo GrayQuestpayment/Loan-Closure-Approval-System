@@ -460,10 +460,7 @@ function isAdmin(identity){ return ADMIN_EMAILS.includes(identity); }
 
 function isMine(req, identity){
   if(isAdmin(identity)) return true;
-  if(req.mgEmail===identity) return true;
-  if(req.mgEmail==='neel_aamir' &&
-     (identity==='neel.savla@grayquest.com'||identity==='aamir.khan@grayquest.com')) return true;
-  return false;
+  return req.mgEmail===identity;
 }
 
 // ── App ID Excel attachment ────────────────────────────────────────────────
@@ -1001,8 +998,15 @@ function sync(msg,type){
 }
 
 // ── GOOGLE APPS SCRIPT EMAIL CONFIG ──────────────────────────────────────
-let GAS_URL = '';
-try{ GAS_URL = localStorage.getItem('lc_gas_url')||''; }catch(e){}
+// IMPORTANT: paste your deployed Apps Script Web App URL below (between the
+// quotes) and re-upload this file to GitHub. This makes email + Sheet sync
+// work for EVERY person who opens the page — not just the browser it was
+// configured in. The in-app "⚙️ Email Setup" popup only saves the URL to
+// that one browser's local storage, so other people's browsers won't have
+// it until you hardcode it here.
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwAtEQncJqksX9sQ5pREDfPlmK3yjpWWUnITj7timVa512i4Xl063R1JqYeyrtQ1zSvAg/exec';
+let GAS_URL = DEFAULT_GAS_URL || '';
+if(!GAS_URL){ try{ GAS_URL = localStorage.getItem('lc_gas_url')||''; }catch(e){} }
 function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
 function isGASConfigured(){ return GAS_URL && GAS_URL.startsWith('https://script.google.com'); }
 
@@ -1243,8 +1247,18 @@ async function raise(){
   const mgEmail=document.getElementById('mgEmail').value.trim();
   const ccEmail=getCC();
 
-  if(!appId||!nbfc||!amt||!typ||!spoc||!dept||!rmk||!mgEmail||!ccEmail){
-    show('tok-err','Please fill in all fields. If Type or SPOC is Other, the field is mandatory.');return;
+  const missing=[];
+  if(!appId)missing.push('App ID / Loan ID (or attach an Excel)');
+  if(!nbfc)missing.push('NBFC / Lender');
+  if(!amt)missing.push('Approval Amount');
+  if(!typ)missing.push('Type');
+  if(!spoc)missing.push('SPOC');
+  if(!dept)missing.push('Department / Team');
+  if(!rmk)missing.push('Remarks / Reason for Approval');
+  if(!mgEmail)missing.push('Approval Authority (select a Department first)');
+  if(!ccEmail)missing.push('Your Email (CC)');
+  if(missing.length){
+    show('tok-err','Please fill in: '+missing.join(', ')+'.');return;
   }
   const btn=document.getElementById('sbtn');
   btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2"></i> Submitting…';
@@ -1351,6 +1365,11 @@ function renderReqs(){
 // In-app approve/reject. Reject forces a mandatory comment via modal.
 function act(id,action){
   const r=reqs.find(x=>x.id===id);if(!r)return;
+  if(!isMine(r,currentIdentity)){
+    const t=document.getElementById('mgr-toast');
+    if(t){t.className='toast td';t.innerHTML='<i class="ti ti-lock"></i> You are not authorised to action this request.';t.style.display='block';setTimeout(()=>t.style.display='none',4000);}
+    return;
+  }
   if(action==='Rejected'){
     promptRejectComment(r,'inapp');
     return;
