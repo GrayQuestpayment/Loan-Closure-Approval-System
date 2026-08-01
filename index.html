@@ -12,64 +12,64 @@
 :root{--brand:#007FFF;--brand-dark:#0066cc;--brand-light:#e5f2ff}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#ffffff;color:#0a0a0a;min-height:100vh;letter-spacing:-0.01em}
-.app{max-width:800px;margin:0 auto;padding:1.5rem}
-.hdr{margin-bottom:1.5rem}
-.hdr h1{font-size:21px;font-weight:700;color:#0a0a0a;letter-spacing:-0.02em}
-.hdr p{font-size:13px;color:#888;margin-top:3px}
+.app{max-width:1180px;margin:0 auto;padding:1.75rem 2rem}
+.hdr{margin-bottom:1.75rem}
+.hdr h1{font-size:25px;font-weight:700;color:#0a0a0a;letter-spacing:-0.02em}
+.hdr p{font-size:15px;color:#888;margin-top:4px}
 .tabs{display:flex;gap:0;border-bottom:1px solid #eaeaea;margin-bottom:0}
-.tab{padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;color:#888;background:none;border:none;border-bottom:2px solid transparent;transition:all .15s;font-family:'Inter',sans-serif}
+.tab{padding:13px 24px;font-size:15px;font-weight:600;cursor:pointer;color:#888;background:none;border:none;border-bottom:2px solid transparent;transition:all .15s;font-family:'Inter',sans-serif}
 .tab.active{color:var(--brand);border-bottom-color:var(--brand)}
 .tab:hover{color:var(--brand-dark)}
-.panel{display:none;background:#fff;border:1px solid #eaeaea;border-top:none;border-radius:0 0 16px 16px;padding:1.5rem}
+.panel{display:none;background:#fff;border:1px solid #eaeaea;border-top:none;border-radius:0 0 16px 16px;padding:2rem 2.25rem}
 .panel.active{display:block}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.fg{display:flex;flex-direction:column;gap:5px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.fg{display:flex;flex-direction:column;gap:7px}
 .fg.full{grid-column:1/-1}
-label{font-size:11px;font-weight:600;color:#888;letter-spacing:.06em;text-transform:uppercase}
-input,select,textarea{width:100%;font-family:'Inter',sans-serif;font-size:13px;padding:8px 10px;border:1px solid #e0e0e0;border-radius:9px;background:#fafafa;color:#0a0a0a;transition:border .15s;outline:none}
+label{font-size:13px;font-weight:600;color:#888;letter-spacing:.05em;text-transform:uppercase}
+input,select,textarea{width:100%;font-family:'Inter',sans-serif;font-size:15px;padding:12px 14px;border:1px solid #e0e0e0;border-radius:10px;background:#fafafa;color:#0a0a0a;transition:border .15s;outline:none}
 input:focus,select:focus,textarea:focus{border-color:var(--brand);background:#fff}
-textarea{resize:vertical;min-height:72px}
-.abox{background:#fffbeb;border:1px solid #f3d77a;border-radius:12px;padding:12px 16px;margin:14px 0;display:flex;align-items:center;justify-content:space-between}
-.alabel{font-size:12px;color:#92680b;font-weight:500}
-.aamt{font-size:22px;font-weight:700;color:#92680b}
-.btn-submit{background:var(--brand);border:none;border-radius:999px;padding:10px 26px;font-size:13px;cursor:pointer;color:#fff;font-family:'Inter',sans-serif;font-weight:600;transition:background .15s}
+textarea{resize:vertical;min-height:90px}
+.abox{background:#fffbeb;border:1px solid #f3d77a;border-radius:12px;padding:16px 20px;margin:18px 0;display:flex;align-items:center;justify-content:space-between}
+.alabel{font-size:14px;color:#92680b;font-weight:500}
+.aamt{font-size:26px;font-weight:700;color:#92680b}
+.btn-submit{background:var(--brand);border:none;border-radius:999px;padding:13px 34px;font-size:15px;cursor:pointer;color:#fff;font-family:'Inter',sans-serif;font-weight:600;transition:background .15s}
 .btn-submit:hover{background:var(--brand-dark)}
 .btn-submit:disabled{opacity:.5;cursor:default}
-.btn-approve{background:#dcfce7;border:1px solid #86efac;border-radius:999px;padding:7px 14px;font-size:12px;cursor:pointer;color:#15803d;font-family:'Inter',sans-serif;font-weight:600}
-.btn-reject{background:#fee2e2;border:1px solid #fca5a5;border-radius:999px;padding:7px 14px;font-size:12px;cursor:pointer;color:#dc2626;font-family:'Inter',sans-serif;font-weight:600}
-.card{background:#fff;border:1px solid #eaeaea;border-radius:14px;padding:1rem 1.25rem;margin-bottom:10px}
+.btn-approve{background:#dcfce7;border:1px solid #86efac;border-radius:999px;padding:9px 18px;font-size:14px;cursor:pointer;color:#15803d;font-family:'Inter',sans-serif;font-weight:600}
+.btn-reject{background:#fee2e2;border:1px solid #fca5a5;border-radius:999px;padding:9px 18px;font-size:14px;cursor:pointer;color:#dc2626;font-family:'Inter',sans-serif;font-weight:600}
+.card{background:#fff;border:1px solid #eaeaea;border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:14px}
 .card:hover{border-color:var(--brand)}
-.ch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
-.ct{font-size:14px;font-weight:700;color:#0a0a0a}
-.cs{font-size:11px;color:#aaa;margin-top:2px}
-.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.ch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.ct{font-size:17px;font-weight:700;color:#0a0a0a}
+.cs{font-size:13px;color:#aaa;margin-top:3px}
+.badge{font-size:13px;font-weight:600;padding:4px 12px;border-radius:20px}
 .b-pending{background:#fef9c3;color:#a16207}
 .b-approved{background:#dcfce7;color:#15803d}
 .b-rejected{background:#fee2e2;color:#dc2626}
-.cmeta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
-.ml{font-size:10px;font-weight:600;color:#aaa;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px}
-.mv{font-size:12px;color:#0a0a0a;font-weight:500}
-.mv.amt{color:#a16207;font-size:14px;font-weight:600}
-.cact{display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #f0f0f0;padding-top:10px}
-.remarks{font-size:12px;color:#888;margin-top:6px;font-style:italic}
-.rejnote{font-size:12px;color:#dc2626;margin-top:6px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px}
-.empty{text-align:center;padding:3rem 1rem;color:#bbb;font-size:13px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
-.sc{background:#fafafa;border:1px solid #eaeaea;border-radius:12px;padding:.875rem}
-.sl{font-size:11px;font-weight:600;color:#aaa;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
-.sv{font-size:22px;font-weight:700;color:#0a0a0a}
+.cmeta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.ml{font-size:12px;font-weight:600;color:#aaa;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px}
+.mv{font-size:15px;color:#0a0a0a;font-weight:500}
+.mv.amt{color:#a16207;font-size:17px;font-weight:600}
+.cact{display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #f0f0f0;padding-top:14px}
+.remarks{font-size:14px;color:#888;margin-top:8px;font-style:italic}
+.rejnote{font-size:14px;color:#dc2626;margin-top:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px}
+.empty{text-align:center;padding:3.5rem 1rem;color:#bbb;font-size:15px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:1.75rem}
+.sc{background:#fafafa;border:1px solid #eaeaea;border-radius:12px;padding:1.15rem}
+.sl{font-size:12px;font-weight:600;color:#aaa;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}
+.sv{font-size:28px;font-weight:700;color:#0a0a0a}
 .sv.warn{color:#a16207}
 .sv.ok{color:#15803d}
-.toast{border-radius:10px;padding:11px 14px;font-size:12px;margin-bottom:1rem;display:none;font-weight:500}
+.toast{border-radius:10px;padding:14px 18px;font-size:14px;margin-bottom:1rem;display:none;font-weight:500}
 .ts{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d}
 .td{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
 .fr{display:flex;gap:8px;margin-bottom:1rem;align-items:center}
-.fr select{width:auto;font-size:12px;padding:6px 8px}
-.mailcard{background:#fafafa;border:1px solid #eaeaea;border-radius:14px;overflow:hidden;margin-top:10px}
-.mailhdr{background:#fff;border-bottom:1px solid #eaeaea;padding:12px 16px}
-.mailf{display:flex;gap:8px;font-size:12px;margin-bottom:3px}
-.mailfl{color:#aaa;min-width:44px;font-weight:600}
-.mailbody{padding:14px 16px;font-size:12px;color:#444;line-height:1.7;white-space:pre-wrap}
+.fr select{width:auto;font-size:14px;padding:8px 12px}
+.mailcard{background:#fafafa;border:1px solid #eaeaea;border-radius:14px;overflow:hidden;margin-top:12px}
+.mailhdr{background:#fff;border-bottom:1px solid #eaeaea;padding:14px 18px}
+.mailf{display:flex;gap:8px;font-size:14px;margin-bottom:4px}
+.mailfl{color:#aaa;min-width:50px;font-weight:600}
+.mailbody{padding:16px 18px;font-size:14px;color:#444;line-height:1.7;white-space:pre-wrap}
 .syncrow{display:flex;align-items:center;gap:6px;font-size:11px;color:#aaa}
 .sdot{width:7px;height:7px;border-radius:50%;display:inline-block}
 .sok{background:#22c55e}.sp{background:#f59e0b}.sf{background:#ef4444}
@@ -169,19 +169,8 @@ textarea{resize:vertical;min-height:72px}
         </select>
         <input type="text" id="typOther" placeholder="Enter type (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb"/>
       </div>
-      <div class="fg"><label>SPOC (Your Name)</label>
-        <select id="spoc" onchange="handleSpocChange(this.value)">
-          <option value="">Select SPOC</option>
-          <option>Imran</option>
-          <option>Ganesh</option>
-          <option>Prathamesh</option>
-          <option>Riya</option>
-          <option>Rohit</option>
-          <option>Sachin</option>
-          <option>Sakshee</option>
-          <option value="other">Other</option>
-        </select>
-        <input type="text" id="spocOther" placeholder="Enter your name (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb"/>
+      <div class="fg"><label>SPOC Email (Your Email)</label>
+        <input type="email" id="spoc" placeholder="Enter your email (e.g. yourname@grayquest.com)"/>
       </div>
       <div class="fg full"><label>Remarks / Reason for Approval</label>
         <textarea id="rmk" placeholder="Explain why manager approval is needed for this amount..."></textarea>
@@ -498,15 +487,8 @@ function clearAppIdFile(){
   if(info)info.style.display='none';
 }
 
-function handleSpocChange(val){
-  const inp=document.getElementById('spocOther');
-  if(val==='other'){inp.style.display='block';inp.focus();}
-  else{inp.style.display='none';inp.value='';}
-}
 function getSpoc(){
-  const sel=document.getElementById('spoc').value;
-  if(sel==='other') return document.getElementById('spocOther').value.trim();
-  return sel;
+  return document.getElementById('spoc').value.trim();
 }
 function handleTypChange(val){
   const inp=document.getElementById('typOther');
@@ -616,9 +598,12 @@ function finalizeEmailAction(req,action,comment){
 
   const authorityName=mgrNames[req.mgEmail]||req.mgEmail;
   const subject=`[${action}] Loan Closure – App ID ${req.appId} | ₹${req.amt.toLocaleString('en-IN')} – ${req.id}`;
-  const confirmBody=`Dear ${req.spoc},\n\nYour loan closure request has been ${action.toLowerCase()} by ${authorityName}.\n\nRequest ID : ${req.id}\nApp ID     : ${req.appId}\nNBFC       : ${req.nbfc}\nAmount     : ₹${req.amt.toLocaleString('en-IN')}\nStatus     : ${action.toUpperCase()}\nActioned   : ${req.actionDate}\n${action==='Rejected'?'\nRejection Reason : '+comment+'\n':''}\n${action==='Approved'?'You may proceed with the approved transfer.':'Please review and re-raise if needed.'}\n\nRegards,\n${authorityName}`;
-  const authCC=req.mgEmail==='neel_aamir'?'neel.savla@grayquest.com,aamir.khan@grayquest.com':req.mgEmail;
-  sendGmail(req.ccEmail||req.spoc,authCC,subject,'',confirmBody);
+  const {html:confHtml, plain:confPlain}=buildStatusEmail(req, action, comment);
+  // TO = the requester (SPOC email); CC = the CC they entered + the acting authority
+  const toAddr=req.spoc||req.ccEmail;
+  const authEmail=req.mgEmail==='neel_aamir'?'neel.savla@grayquest.com,aamir.khan@grayquest.com':req.mgEmail;
+  const ccList=[req.ccEmail,authEmail].filter(x=>x&&x.trim()).join(',');
+  sendGmail(toAddr,ccList,subject,confHtml,confPlain);
   syncSheetStatus(req.id,action,req.actionDate,action==='Rejected'?comment:'');
 
   updStats();updBadge();
@@ -1231,51 +1216,47 @@ function buildActionEmail(req){
   const authorityName=mgrNames[req.mgEmail]||req.mgEmail;
 
   const html=`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:0;background:#f5f4f0;font-family:Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f4f0;padding:32px 0">
+<html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#eef1f6;font-family:'Segoe UI',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f6;padding:24px 0">
 <tr><td align="center">
-<table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e0ddd5;">
-  <tr><td style="background:#007FFF;padding:24px 32px;">
-    <div style="font-size:18px;font-weight:700;color:#ffffff;">GrayQuest · Loan Closure Approval</div>
-    <div style="display:inline-block;font-size:12px;font-weight:700;color:#ffffff;background:rgba(255,255,255,0.22);border-radius:20px;padding:4px 12px;margin-top:8px;letter-spacing:.02em;">⚡ Action required from ${authorityName}</div>
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:720px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+  <tr><td style="background:#007FFF;padding:36px 44px;">
+    <div style="font-size:26px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">GrayQuest · Loan Closure Approval</div>
+    <div style="display:inline-block;font-size:15px;font-weight:700;color:#ffffff;background:rgba(255,255,255,0.22);border-radius:24px;padding:7px 18px;margin-top:14px;">⚡ Action required from ${authorityName}</div>
   </td></tr>
-  <tr><td style="padding:28px 32px;">
-    <p style="font-size:14px;color:#111;margin:0 0 20px">Dear <strong>${authorityName}</strong>,</p>
-    <p style="font-size:13px;color:#555;margin:0 0 20px">A loan closure approval request has been raised and requires your action.</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f8f5;border:1px solid #e5e5e0;border-radius:8px;overflow:hidden;margin-bottom:24px;">
-      <tr style="border-bottom:1px solid #e5e5e0"><td style="padding:10px 16px;font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;width:130px">Request ID</td><td style="padding:10px 16px;font-size:13px;font-weight:700;color:#111">${req.id}</td></tr>
-      <tr style="border-bottom:1px solid #e5e5e0;background:#fff"><td style="padding:10px 16px;font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase">App ID</td><td style="padding:10px 16px;font-size:13px;color:#111">${req.appId}</td></tr>
-      <tr style="border-bottom:1px solid #e5e5e0"><td style="padding:10px 16px;font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase">NBFC</td><td style="padding:10px 16px;font-size:13px;color:#111">${req.nbfc}</td></tr>
-      <tr style="border-bottom:1px solid #e5e5e0;background:#fff"><td style="padding:10px 16px;font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase">Amount</td><td style="padding:10px 16px;font-size:16px;font-weight:700;color:#a16207">₹${req.amt.toLocaleString('en-IN')}</td></tr>
-      <tr style="border-bottom:1px solid #e5e5e0"><td style="padding:10px 16px;font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase">Type</td><td style="padding:10px 16px;font-size:13px;color:#111">${req.typ}</td></tr>
-      <tr style="border-bottom:1px solid #e5e5e0;background:#fff"><td style="padding:10px 16px;font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase">Department</td><td style="padding:10px 16px;font-size:13px;color:#111">${req.dept}</td></tr>
-      <tr style="background:#fff"><td style="padding:10px 16px;font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase">SPOC</td><td style="padding:10px 16px;font-size:13px;color:#111">${req.spoc}</td></tr>
+  <tr><td style="padding:40px 44px;">
+    <p style="font-size:19px;color:#111;margin:0 0 10px">Dear <strong>${authorityName}</strong>,</p>
+    <p style="font-size:16px;color:#555;line-height:1.6;margin:0 0 28px">A loan closure approval request has been raised and requires your action. Please review the details below and approve or reject.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e8ee;border-radius:12px;overflow:hidden;margin-bottom:28px;">
+      <tr style="border-bottom:1px solid #e5e8ee"><td style="padding:16px 22px;font-size:13px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.04em;width:190px">Request ID</td><td style="padding:16px 22px;font-size:17px;font-weight:700;color:#111">${req.id}</td></tr>
+      <tr style="border-bottom:1px solid #e5e8ee;background:#f9fafc"><td style="padding:16px 22px;font-size:13px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.04em">App ID</td><td style="padding:16px 22px;font-size:17px;color:#111">${req.appId}</td></tr>
+      <tr style="border-bottom:1px solid #e5e8ee"><td style="padding:16px 22px;font-size:13px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.04em">NBFC / Lender</td><td style="padding:16px 22px;font-size:17px;color:#111">${req.nbfc}</td></tr>
+      <tr style="border-bottom:1px solid #e5e8ee;background:#f9fafc"><td style="padding:16px 22px;font-size:13px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.04em">Amount</td><td style="padding:16px 22px;font-size:24px;font-weight:800;color:#b45309">₹${req.amt.toLocaleString('en-IN')}</td></tr>
+      <tr style="border-bottom:1px solid #e5e8ee"><td style="padding:16px 22px;font-size:13px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.04em">Type</td><td style="padding:16px 22px;font-size:17px;color:#111">${req.typ}</td></tr>
+      <tr style="border-bottom:1px solid #e5e8ee;background:#f9fafc"><td style="padding:16px 22px;font-size:13px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.04em">Department</td><td style="padding:16px 22px;font-size:17px;color:#111">${req.dept}</td></tr>
+      <tr><td style="padding:16px 22px;font-size:13px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.04em">SPOC</td><td style="padding:16px 22px;font-size:17px;color:#111">${req.spoc}</td></tr>
     </table>
-    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 16px;margin-bottom:28px;">
-      <div style="font-size:11px;font-weight:700;color:#a16207;text-transform:uppercase;margin-bottom:6px">Remarks</div>
-      <div style="font-size:13px;color:#555">${req.rmk}</div>
-    </div>
-    <p style="font-size:13px;color:#555;margin:0 0 16px;font-weight:600">Click a button below to action this request:</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;margin-bottom:34px;"><tr><td style="padding:20px 24px;">
+      <div style="font-size:13px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Remarks / Reason for Approval</div>
+      <div style="font-size:16px;color:#444;line-height:1.6">${req.rmk}</div>
+    </td></tr></table>
+    <p style="font-size:16px;color:#333;margin:0 0 20px;font-weight:700;text-align:center">Click a button below to action this request</p>
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td width="48%" align="center">
-          <a href="${approveURL}" style="display:block;background:#16a34a;color:#ffffff;text-decoration:none;padding:14px 0;border-radius:8px;font-size:15px;font-weight:700;text-align:center;letter-spacing:0.02em;">
-            ✓ &nbsp; APPROVE
-          </a>
+          <a href="${approveURL}" style="display:block;background:#16a34a;color:#ffffff;text-decoration:none;padding:20px 0;border-radius:12px;font-size:19px;font-weight:800;text-align:center;letter-spacing:0.03em;">✓ &nbsp; APPROVE</a>
         </td>
         <td width="4%"></td>
         <td width="48%" align="center">
-          <a href="${rejectURL}" style="display:block;background:#dc2626;color:#ffffff;text-decoration:none;padding:14px 0;border-radius:8px;font-size:15px;font-weight:700;text-align:center;letter-spacing:0.02em;">
-            ✕ &nbsp; REJECT
-          </a>
+          <a href="${rejectURL}" style="display:block;background:#dc2626;color:#ffffff;text-decoration:none;padding:20px 0;border-radius:12px;font-size:19px;font-weight:800;text-align:center;letter-spacing:0.03em;">✕ &nbsp; REJECT</a>
         </td>
       </tr>
     </table>
-    <p style="font-size:11px;color:#aaa;margin:20px 0 0;text-align:center">Approve is single-click. Reject will open the approval system and require you to enter a mandatory reason before it is recorded.</p>
+    <p style="font-size:14px;color:#8a94a6;margin:24px 0 0;text-align:center;line-height:1.6">Approve is single-click. Reject will open the approval system and require you to enter a mandatory reason before it is recorded.</p>
   </td></tr>
-  <tr><td style="background:#f8f8f5;padding:16px 32px;border-top:1px solid #e5e5e0;">
-    <p style="font-size:11px;color:#aaa;margin:0;text-align:center">GrayQuest Loan Closure Approval System · ${req.date} ${req.time}</p>
+  <tr><td style="background:#f9fafc;padding:22px 44px;border-top:1px solid #e5e8ee;">
+    <p style="font-size:13px;color:#8a94a6;margin:0;text-align:center">GrayQuest Loan Closure Approval System · ${req.date} ${req.time}</p>
   </td></tr>
 </table>
 </td></tr>
@@ -1283,6 +1264,70 @@ function buildActionEmail(req){
 </body></html>`;
 
   const plain=`Dear ${authorityName},\n\nLoan Closure Approval Request — ${req.id}\n\nApp ID: ${req.appId} | NBFC: ${req.nbfc} | Amount: ₹${req.amt.toLocaleString('en-IN')} | Type: ${req.typ}\nSPOC: ${req.spoc} | Dept: ${req.dept}\n\nRemarks: ${req.rmk}\n\nAPPROVE: ${approveURL}\nREJECT (reason required):  ${rejectURL}\n\nRegards,\n${req.spoc}`;
+
+  return {html, plain};
+}
+
+// Full-width professional confirmation email for APPROVED / REJECTED
+function buildStatusEmail(r, action, comment){
+  const authorityName=mgrNames[r.mgEmail]||r.mgEmail;
+  const spocName=(r.spoc&&r.spoc.includes('@'))?r.spoc.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()):r.spoc;
+  const isApproved=action==='Approved';
+  const accent=isApproved?'#16a34a':'#dc2626';
+  const accentBg=isApproved?'#f0fdf4':'#fef2f2';
+  const stamp=isApproved?'APPROVED':'REJECTED';
+  const icon=isApproved?'✓':'✕';
+  const rows=[
+    ['Request ID', r.id, true],
+    ['App ID', r.appId, false],
+    ['NBFC / Lender', r.nbfc, false],
+    ['Amount', '₹'+r.amt.toLocaleString('en-IN'), false, true],
+    ['Type', r.typ, false],
+    ['Department', r.dept, false],
+    ['SPOC', r.spoc, false],
+    ['Actioned By', authorityName, false],
+    ['Actioned On', r.actionDate||new Date().toLocaleString('en-IN'), false]
+  ];
+  let rowsHtml='';
+  rows.forEach((row,i)=>{
+    const bg=i%2===1?'#f9fafc':'#ffffff';
+    const valStyle=row[3]?'font-size:24px;font-weight:800;color:#b45309':(row[2]?'font-size:17px;font-weight:700;color:#111':'font-size:17px;color:#111');
+    rowsHtml+=`<tr style="border-bottom:1px solid #e5e8ee;background:${bg}"><td style="padding:16px 22px;font-size:13px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.04em;width:190px">${row[0]}</td><td style="padding:16px 22px;${valStyle}">${row[1]}</td></tr>`;
+  });
+  const reasonBlock=(!isApproved&&comment)?`<table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;margin-bottom:30px;"><tr><td style="padding:20px 24px;"><div style="font-size:13px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Rejection Reason</div><div style="font-size:16px;color:#444;line-height:1.6">${comment}</div></td></tr></table>`:'';
+  const nextLine=isApproved?'You may proceed with the approved transfer amount.':'Please review the reason above and re-raise the request if needed.';
+
+  const html=`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#eef1f6;font-family:'Segoe UI',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f6;padding:24px 0">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:720px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+  <tr><td style="background:${accent};padding:36px 44px;text-align:center;">
+    <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">GrayQuest · Loan Closure Approval</div>
+  </td></tr>
+  <tr><td style="padding:40px 44px 10px;text-align:center;">
+    <div style="width:76px;height:76px;line-height:76px;border-radius:50%;background:${accentBg};color:${accent};font-size:38px;font-weight:800;margin:0 auto 16px;">${icon}</div>
+    <div style="font-size:44px;font-weight:800;letter-spacing:2px;color:${accent};margin-bottom:6px;">${stamp}</div>
+    <div style="font-size:16px;color:#555;">Request <strong>${r.id}</strong> has been ${action.toLowerCase()}.</div>
+  </td></tr>
+  <tr><td style="padding:24px 44px 40px;">
+    <p style="font-size:17px;color:#111;margin:0 0 24px">Dear <strong>${spocName}</strong>, your loan closure request has been <strong style="color:${accent}">${action.toLowerCase()}</strong> by ${authorityName}.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e8ee;border-radius:12px;overflow:hidden;margin-bottom:28px;">${rowsHtml}</table>
+    ${reasonBlock}
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:${accentBg};border:1px solid ${isApproved?'#bbf7d0':'#fecaca'};border-radius:12px;"><tr><td style="padding:18px 24px;text-align:center;">
+      <div style="font-size:16px;font-weight:700;color:${accent}">${nextLine}</div>
+    </td></tr></table>
+  </td></tr>
+  <tr><td style="background:#f9fafc;padding:22px 44px;border-top:1px solid #e5e8ee;">
+    <p style="font-size:13px;color:#8a94a6;margin:0;text-align:center">GrayQuest Loan Closure Approval System · ${r.actionDate||new Date().toLocaleString('en-IN')}</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+  const plain=`Dear ${spocName},\n\nYour loan closure request has been ${action.toUpperCase()} by ${authorityName}.\n\nRequest ID : ${r.id}\nApp ID     : ${r.appId}\nNBFC       : ${r.nbfc}\nAmount     : ₹${r.amt.toLocaleString('en-IN')}\nType       : ${r.typ}\nStatus     : ${action.toUpperCase()}\nActioned   : ${r.actionDate||new Date().toLocaleString('en-IN')}\n${(!isApproved&&comment)?'\nRejection Reason : '+comment+'\n':''}\n${nextLine}\n\nRegards,\n${authorityName}`;
 
   return {html, plain};
 }
@@ -1306,7 +1351,7 @@ async function raise(){
   if(!nbfc)missing.push('NBFC / Lender');
   if(!amt)missing.push('Approval Amount');
   if(!typ)missing.push('Type');
-  if(!spoc)missing.push('SPOC');
+  if(!spoc)missing.push('SPOC Email (Your Email)');
   if(!dept)missing.push('Department / Team');
   if(!rmk)missing.push('Remarks / Reason for Approval');
   if(!mgEmail)missing.push('Approval Authority (select a Department first)');
@@ -1352,7 +1397,7 @@ async function raise(){
   ['appId','amt','rmk'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('nbfc').value='';document.getElementById('nbfcOther').value='';document.getElementById('nbfcOther').style.display='none';
   document.getElementById('typ').value='';document.getElementById('typOther').value='';document.getElementById('typOther').style.display='none';
-  document.getElementById('spoc').value='';document.getElementById('spocOther').value='';document.getElementById('spocOther').style.display='none';
+  document.getElementById('spoc').value='';
   document.getElementById('department').value='';document.getElementById('deptOther').value='';document.getElementById('deptOther').style.display='none';document.getElementById('mgEmail').value='';
   document.getElementById('ccSelect').value='';document.getElementById('ccEmail').value='';
   document.getElementById('ccEmail').style.display='none';
@@ -1435,26 +1480,14 @@ async function finalizeInAppAction(r,action,comment){
   if(action==='Rejected') r.rejectComment=comment;
   save();
   const subject=`[${action}] Loan Closure – App ID ${r.appId} | ₹${r.amt.toLocaleString('en-IN')} – ${r.id}`;
-  const body=`Dear ${r.spoc},
-
-Your loan closure approval request has been ${action.toLowerCase()}.
-
-──────────────────────────────
-Request ID : ${r.id}
-App ID     : ${r.appId}
-NBFC       : ${r.nbfc}
-Amount     : ₹${r.amt.toLocaleString('en-IN')}
-Type       : ${r.typ}
-Status     : ${action.toUpperCase()}
-Actioned   : ${r.actionDate}
-${action==='Rejected'?'Reason     : '+comment+'\n':''}──────────────────────────────
-${action==='Approved'?'\nYou may proceed with the approved transfer amount.\n':'\nPlease review and re-raise if needed.\n'}
-Regards,
-${mgrNames[r.mgEmail]||'Manager'}`;
-  const authCC=r.mgEmail==='neel_aamir'?'neel.savla@grayquest.com,aamir.khan@grayquest.com':r.mgEmail;
-  const sent=await sendGmail(r.ccEmail||r.spoc,authCC,subject,body);
+  const {html:confHtml, plain:body}=buildStatusEmail(r, action, comment);
+  // TO = the requester (SPOC email); CC = the CC they entered + the acting authority
+  const toAddr=r.spoc||r.ccEmail;
+  const authEmail=r.mgEmail==='neel_aamir'?'neel.savla@grayquest.com,aamir.khan@grayquest.com':r.mgEmail;
+  const ccList=[r.ccEmail,authEmail].filter(x=>x&&x.trim()).join(',');
+  const sent=await sendGmail(toAddr,ccList,subject,confHtml,body);
   syncSheetStatus(r.id,action,r.actionDate,action==='Rejected'?comment:'');
-  mails.push({type:action.toLowerCase(),ts:new Date().toLocaleString('en-IN'),from:'Manager',to:r.ccEmail||r.spoc,subject,body,sent});
+  mails.push({type:action.toLowerCase(),ts:new Date().toLocaleString('en-IN'),from:'Manager',to:toAddr,subject,body,sent});
   save();
   const t=document.getElementById('mgr-toast');
   t.className=`toast ${action==='Approved'?'ts':'td'}`;
