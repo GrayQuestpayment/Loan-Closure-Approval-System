@@ -1014,7 +1014,7 @@ function sync(msg,type){
 // configured in. The in-app "⚙️ Email Setup" popup only saves the URL to
 // that one browser's local storage, so other people's browsers won't have
 // it until you hardcode it here.
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwAtEQncJqksX9sQ5pREDfPlmK3yjpWWUnITj7timVa512i4Xl063R1JqYeyrtQ1zSvAg/exec';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxsSDmjdtB3RMO6Q8XaugFpjv70jh0-2wU0_oI7CjUB0DWUzJ-FqItseWZOzEsfLMBUcQ/exec';
 let GAS_URL = DEFAULT_GAS_URL || '';
 if(!GAS_URL){ try{ GAS_URL = localStorage.getItem('lc_gas_url')||''; }catch(e){} }
 function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
