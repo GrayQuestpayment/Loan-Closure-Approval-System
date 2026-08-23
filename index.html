@@ -303,9 +303,15 @@ textarea{resize:vertical;min-height:90px}
         <div class="sc"><div class="sl">My Pending Amt</div><div class="sv warn" id="st-amt">₹0</div></div>
       </div>
 
-      <div class="fr">
-        <span style="font-size:12px;color:#888">Filter:</span>
-        <select onchange="filt(this.value)"><option value="all">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
+      <div class="fr" style="justify-content:space-between">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:12px;color:#888">Filter:</span>
+          <select onchange="filt(this.value)"><option value="all">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span id="sync-status" style="font-size:12px;color:#aaa"></span>
+          <button onclick="loadRequestsFromSheet()" style="background:#007FFF;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
+        </div>
       </div>
       <div id="mgr-toast" class="toast"></div>
       <div id="rlist"><div class="empty"><i class="ti ti-inbox" style="font-size:36px;display:block;margin-bottom:8px"></i>No requests assigned to you yet.</div></div>
@@ -505,14 +511,46 @@ window.addEventListener('load',()=>{
   updBadge();
 });
 
-const DEFAULT_GAS_URL = ' https://script.google.com/macros/s/AKfycbyDJDetd5B4uYifINV4VMm9ucmiR1wc25tVoDRif1pgLuMBHKUV8A1wBMdhkNoxNCq78Q/exec';
-let GAS_URL = DEFAULT_GAS_URL || '';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyDJDetd5B4uYifINV4VMm9ucmiR1wc25tVoDRif1pgLuMBHKUV8A1wBMdhkNoxNCq78Q/exec';
+let GAS_URL = (DEFAULT_GAS_URL||'').trim();
 if(!GAS_URL){ try{ GAS_URL = localStorage.getItem('lc_gas_url')||''; }catch(e){} }
 function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
 function isGASConfigured(){ return GAS_URL && GAS_URL.startsWith('https://script.google.com'); }
 
 function save(){
   try{localStorage.setItem('lc_reqs',JSON.stringify(reqs));localStorage.setItem('lc_mails',JSON.stringify(mails));}catch(e){}
+}
+
+// Load ALL requests from the Google Sheet (so every device/authority sees the same data)
+let isLoadingReqs=false;
+async function loadRequestsFromSheet(silent){
+  if(!isGASConfigured())return false;
+  if(isLoadingReqs)return false;
+  isLoadingReqs=true;
+  const statusEl=document.getElementById('sync-status');
+  if(statusEl&&!silent){statusEl.textContent='Syncing requests…';statusEl.style.color='#f59e0b';}
+  try{
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'getRequests',sheetId:SHEET_ID,tab:SHEET_TAB})
+    });
+    const data=await res.json();
+    if(data&&data.ok&&Array.isArray(data.requests)){
+      reqs=data.requests;
+      save();
+      if(statusEl){statusEl.textContent='Synced ✓';statusEl.style.color='#15803d';}
+      renderReqs();
+      updStats();
+      updBadge();
+      isLoadingReqs=false;
+      return true;
+    }
+  }catch(e){
+    if(statusEl){statusEl.textContent='Sync failed (offline)';statusEl.style.color='#dc2626';}
+  }
+  isLoadingReqs=false;
+  return false;
 }
 function upd(){const v=parseFloat(document.getElementById('amt').value)||0;document.getElementById('adsp').textContent='₹ '+v.toLocaleString('en-IN');}
 function updBadge(){
@@ -592,6 +630,7 @@ function doPasswordLogin(){
   go('mgr');
   renderReqs();
   updStats();
+  loadRequestsFromSheet(); // pull latest requests from the Sheet (multi-user)
 }
 
 function doLogout(){
@@ -662,8 +701,8 @@ function go(t){
   
   if(t==='raise')document.querySelector('.tab[onclick*="raise"]').classList.add('active');
   if(t==='login')document.getElementById('tab-login').classList.add('active');
-  if(t==='mgr'){document.getElementById('tab-mgr').classList.add('active');renderReqs();}
-  if(t==='dash'){document.getElementById('tab-dash').classList.add('active');populateYearFilter();renderDash();}
+  if(t==='mgr'){document.getElementById('tab-mgr').classList.add('active');renderReqs();loadRequestsFromSheet(true);}
+  if(t==='dash'){document.getElementById('tab-dash').classList.add('active');populateYearFilter();renderDash();loadRequestsFromSheet(true);}
 }
 
 function filt(v){fStatus=v;renderReqs();}
@@ -739,13 +778,20 @@ function promptRejectComment(req,source){
   };
 }
 
-function finalizeInAppAction(req,action,comment){
+async function finalizeInAppAction(req,action,comment){
   req.status=action;
   req.actionDate=new Date().toLocaleString('en-IN');
   if(action==='Rejected')req.rejectComment=comment;
   save();
-  syncSheetStatus(req.id,action,req.actionDate,comment);
-  
+  renderReqs();
+  updStats();
+  updBadge();
+
+  const toast=document.getElementById('mgr-toast');
+  if(toast){toast.className='toast';toast.style.background='#fffbeb';toast.style.color='#92680b';toast.style.border='1px solid #f3d77a';toast.style.display='block';toast.textContent=`Recording ${action.toLowerCase()} for ${req.id}…`;}
+
+  const okSheet=await syncSheetStatus(req.id,action,req.actionDate,comment);
+
   const subject=`[${action}] Loan Closure – App ID ${req.appId} | ₹${req.amt.toLocaleString('en-IN')} – ${req.id}`;
   const {html, plain}=buildStatusEmail(req, action, comment);
   const toAddr=req.spoc||req.ccEmail;
@@ -753,9 +799,11 @@ function finalizeInAppAction(req,action,comment){
   const ccList=[req.ccEmail,authEmail].filter(x=>x&&x.trim()).join(',');
   sendGmail(toAddr,ccList,subject,html,plain);
 
-  renderReqs();
-  updStats();
-  updBadge();
+  if(toast){
+    if(okSheet){toast.style.background='#f0fdf4';toast.style.color='#15803d';toast.style.border='1px solid #bbf7d0';toast.textContent=`✓ ${req.id} ${action.toLowerCase()} — Sheet updated & email sent.`;}
+    else{toast.style.background='#fef2f2';toast.style.color='#dc2626';toast.style.border='1px solid #fecaca';toast.textContent=`${req.id} ${action.toLowerCase()} locally, but Sheet update failed. Click Refresh and try again if needed.`;}
+    setTimeout(()=>{toast.style.display='none';},6000);
+  }
 }
 
 function buildStatusEmail(req,action,comment){
