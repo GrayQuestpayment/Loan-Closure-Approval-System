@@ -792,12 +792,12 @@ async function finalizeInAppAction(req,action,comment){
 
   const okSheet=await syncSheetStatus(req.id,action,req.actionDate,comment);
 
-  const subject=`[${action}] Loan Closure – App ID ${req.appId} | ₹${req.amt.toLocaleString('en-IN')} – ${req.id}`;
+  const subject=`Loan Closure Approval – App ID ${req.appId}`;
   const {html, plain}=buildStatusEmail(req, action, comment);
   const toAddr=req.spoc||req.ccEmail;
   const authEmail=req.mgEmail==='neel_aamir'?'neel.savla@grayquest.com,aamir.khan@grayquest.com':req.mgEmail;
   const ccList=[req.ccEmail,authEmail].filter(x=>x&&x.trim()).join(',');
-  sendGmail(toAddr,ccList,subject,html,plain);
+  sendGmail(toAddr,ccList,subject,html,plain,null,'App ID '+req.appId);
 
   if(toast){
     if(okSheet){toast.style.background='#f0fdf4';toast.style.color='#15803d';toast.style.border='1px solid #bbf7d0';toast.textContent=`✓ ${req.id} ${action.toLowerCase()} — Sheet updated & email sent.`;}
@@ -889,7 +889,7 @@ async function raise(){
   const sheetRow=[reqId,dateStr,timeStr,newReq.appId,nbfc,amt,'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,'Pending',appIdFileData?appIdFileData.name:'None','',''];
   await syncSheet(sheetRow);
 
-  const subject=`[Approval Needed] Loan Closure – App ID ${newReq.appId} | ₹${amt.toLocaleString('en-IN')} – ${reqId}`;
+  const subject=`Loan Closure Approval – App ID ${newReq.appId}`;
   const htmlBody=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
     <div style="background:#007FFF;color:#fff;padding:18px 24px">
       <h2 style="margin:0;font-size:18px">Loan Closure Approval Request</h2>
@@ -909,7 +909,7 @@ async function raise(){
   </div>`;
   const textBody=`Approval Request: ${reqId}\nApp ID: ${newReq.appId}\nAmount: ₹${amt}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
 
-  await sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, appIdFileData);
+  await sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, appIdFileData, 'App ID '+newReq.appId);
 
   tokOk.textContent=`Request ${reqId} submitted successfully! Auto-synced to Sheet and email sent.`;
   tokOk.style.display='block';
@@ -924,10 +924,11 @@ async function raise(){
   sbtn.disabled=false; sbtn.innerHTML='<i class="ti ti-send"></i> Submit for Approval';
 }
 
-async function sendEmail(to, cc, subject, htmlBody, textBody, attachment){
+async function sendEmail(to, cc, subject, htmlBody, textBody, attachment, threadKey){
   if(!isGASConfigured()) return false;
   try{
     const payload={to, cc:cc||'', subject, html:htmlBody||'', text:textBody||''};
+    if(threadKey) payload.threadKey=threadKey;
     if(attachment&&attachment.base64){
       payload.attachment={
         name:attachment.name||'attachment.xlsx',
@@ -941,11 +942,11 @@ async function sendEmail(to, cc, subject, htmlBody, textBody, attachment){
       body:JSON.stringify(payload)
     });
     const txt=await res.text();
-    return txt.includes('SENT')||txt.includes('sent');
+    return txt.includes('SENT')||txt.includes('REPLIED')||txt.includes('sent');
   }catch(e){return false;}
 }
-async function sendGmail(to, cc, subject, htmlBody, textBody, attachment){
-  return sendEmail(to, cc, subject, htmlBody, textBody, attachment);
+async function sendGmail(to, cc, subject, htmlBody, textBody, attachment, threadKey){
+  return sendEmail(to, cc, subject, htmlBody, textBody, attachment, threadKey);
 }
 
 async function syncSheet(row){
