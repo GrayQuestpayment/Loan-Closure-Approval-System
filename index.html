@@ -511,7 +511,7 @@ window.addEventListener('load',()=>{
   updBadge();
 });
 
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyDJDetd5B4uYifINV4VMm9ucmiR1wc25tVoDRif1pgLuMBHKUV8A1wBMdhkNoxNCq78Q/exec';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwERSrj9v4qDpxJz6ApRwuOTZwyU4rpzn4hisXcuAfA3fbKPA3dTh81ExmgZUHSNDWKLw/exec';
 let GAS_URL = (DEFAULT_GAS_URL||'').trim();
 if(!GAS_URL){ try{ GAS_URL = localStorage.getItem('lc_gas_url')||''; }catch(e){} }
 function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
