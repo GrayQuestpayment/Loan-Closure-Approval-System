@@ -509,7 +509,72 @@ window.addEventListener('load',()=>{
   populateLoginSelect();
   updStats();
   updBadge();
+  handleEmailAction();
 });
+
+// ── Handle Approve/Reject links clicked from the email ───────────────────────
+let pendingEmailAction=null; // {act, id} held until the authority logs in
+function getParam(name){
+  try{return new URLSearchParams(location.search).get(name);}catch(e){return null;}
+}
+async function handleEmailAction(){
+  const act=getParam('act');
+  const id=getParam('id');
+  if(!act||!id) return;
+  // clean the URL so a refresh doesn't re-trigger
+  try{history.replaceState({},document.title,location.origin+location.pathname);}catch(e){}
+
+  // Must be logged in as an authority to action. If not, hold it and show login.
+  if(!currentIdentity){
+    pendingEmailAction={act,id};
+    go('login');
+    const le=document.getElementById('login-err');
+    if(le){le.style.display='block';le.textContent=`Please log in to ${act} request ${id}.`;}
+    return;
+  }
+  await runEmailAction(act,id);
+}
+
+async function runEmailAction(act,id){
+  // Always pull the freshest data from the Sheet first (multi-user correctness)
+  await loadRequestsFromSheet(true);
+  const req=reqs.find(r=>r.id===id);
+  if(!req){
+    showActionPopup('error',`Request ${id} not found. It may have been deleted.`);
+    return;
+  }
+  // Only the assigned authority (or Admin) can action it
+  if(!isAdmin(currentIdentity) && req.mgEmail!==currentIdentity &&
+     !(req.mgEmail==='neel_aamir'&&(currentIdentity==='neel.savla@grayquest.com'||currentIdentity==='aamir.khan@grayquest.com'))){
+    showActionPopup('error',`You are not the assigned approval authority for ${id}.`);
+    return;
+  }
+  if(req.status && req.status!=='Pending'){
+    showActionPopup('info',`Request ${id} is already ${req.status.toLowerCase()}.`);
+    return;
+  }
+  go('mgr');
+  if(act==='approve'){
+    finalizeInAppAction(req,'Approved','');
+    showActionPopup('approved',`Request ${id} has been approved. A confirmation email has been sent.`);
+  } else if(act==='reject'){
+    promptRejectComment(req,'email');
+  }
+}
+
+function showActionPopup(type,msg){
+  const c=type==='approved'?'#16a34a':type==='error'?'#dc2626':'#007FFF';
+  const bg=type==='approved'?'#f0fdf4':type==='error'?'#fef2f2':'#e5f2ff';
+  const icon=type==='approved'?'✓':type==='error'?'✕':'ℹ';
+  const m=document.createElement('div');
+  m.className='modal-ov';
+  m.innerHTML=`<div class="modal-box" style="text-align:center">
+    <div style="width:60px;height:60px;line-height:60px;border-radius:50%;background:${bg};color:${c};font-size:30px;font-weight:800;margin:0 auto 14px">${icon}</div>
+    <div style="font-size:15px;color:#333;line-height:1.5;margin-bottom:18px">${msg}</div>
+    <button onclick="this.closest('.modal-ov').remove()" style="background:#111;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:14px;font-weight:600;cursor:pointer">Close</button>
+  </div>`;
+  document.body.appendChild(m);
+}
 
 const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwERSrj9v4qDpxJz6ApRwuOTZwyU4rpzn4hisXcuAfA3fbKPA3dTh81ExmgZUHSNDWKLw/exec';
 let GAS_URL = (DEFAULT_GAS_URL||'').trim();
@@ -631,6 +696,13 @@ function doPasswordLogin(){
   renderReqs();
   updStats();
   loadRequestsFromSheet(); // pull latest requests from the Sheet (multi-user)
+
+  // If the authority arrived via an email Approve/Reject link, process it now
+  if(pendingEmailAction){
+    const pa=pendingEmailAction;
+    pendingEmailAction=null;
+    setTimeout(()=>runEmailAction(pa.act,pa.id),300);
+  }
 }
 
 function doLogout(){
@@ -890,6 +962,9 @@ async function raise(){
   await syncSheet(sheetRow);
 
   const subject=`Loan Closure Approval – App ID ${newReq.appId}`;
+  const siteUrl=location.origin+location.pathname;
+  const approveLink=`${siteUrl}?act=approve&id=${encodeURIComponent(reqId)}`;
+  const rejectLink=`${siteUrl}?act=reject&id=${encodeURIComponent(reqId)}`;
   const htmlBody=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
     <div style="background:#007FFF;color:#fff;padding:18px 24px">
       <h2 style="margin:0;font-size:18px">Loan Closure Approval Request</h2>
@@ -905,6 +980,15 @@ async function raise(){
         <tr><td style="padding:6px 0;color:#888">Department:</td><td>${dept}</td></tr>
         <tr><td style="padding:6px 0;color:#888">Remarks:</td><td>${rmk}</td></tr>
       </table>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin-top:8px"><tr>
+        <td style="padding:6px" width="50%" align="center">
+          <a href="${approveLink}" style="display:block;background:#16a34a;color:#ffffff;text-decoration:none;padding:14px 0;border-radius:8px;font-size:15px;font-weight:700;text-align:center">✓ APPROVE</a>
+        </td>
+        <td style="padding:6px" width="50%" align="center">
+          <a href="${rejectLink}" style="display:block;background:#dc2626;color:#ffffff;text-decoration:none;padding:14px 0;border-radius:8px;font-size:15px;font-weight:700;text-align:center">✕ REJECT</a>
+        </td>
+      </tr></table>
+      <p style="font-size:11px;color:#aaa;text-align:center;margin:14px 0 0">Tapping a button opens the approval portal. You may be asked to log in first. Reject will ask for a mandatory reason.</p>
     </div>
   </div>`;
   const textBody=`Approval Request: ${reqId}\nApp ID: ${newReq.appId}\nAmount: ₹${amt}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
