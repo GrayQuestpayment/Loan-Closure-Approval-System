@@ -524,18 +524,12 @@ async function handleEmailAction(){
   // clean the URL so a refresh doesn't re-trigger
   try{history.replaceState({},document.title,location.origin+location.pathname);}catch(e){}
 
-  // Must be logged in as an authority to action. If not, hold it and show login.
-  if(!currentIdentity){
-    pendingEmailAction={act,id};
-    go('login');
-    const le=document.getElementById('login-err');
-    if(le){le.style.display='block';le.textContent=`Please log in to ${act} request ${id}.`;}
-    return;
-  }
-  await runEmailAction(act,id);
+  // No login needed — the secret token in the link proves this is the
+  // correct authority's email. Verify it before doing anything.
+  await runEmailAction(act, id, getParam('t'));
 }
 
-async function runEmailAction(act,id){
+async function runEmailAction(act, id, token){
   // Always pull the freshest data from the Sheet first (multi-user correctness)
   await loadRequestsFromSheet(true);
   const req=reqs.find(r=>r.id===id);
@@ -543,20 +537,29 @@ async function runEmailAction(act,id){
     showActionPopup('error',`Request ${id} not found. It may have been deleted.`);
     return;
   }
-  // Only the assigned authority (or Admin) can action it
-  if(!isAdmin(currentIdentity) && req.mgEmail!==currentIdentity &&
-     !(req.mgEmail==='neel_aamir'&&(currentIdentity==='neel.savla@grayquest.com'||currentIdentity==='aamir.khan@grayquest.com'))){
-    showActionPopup('error',`You are not the assigned approval authority for ${id}.`);
-    return;
-  }
   if(req.status && req.status!=='Pending'){
-    showActionPopup('info',`Request ${id} is already ${req.status.toLowerCase()}.`);
+    showActionPopup('info',`Request ${id} is already ${req.status.toLowerCase()}. No further action is needed.`);
     return;
   }
-  go('mgr');
+  // Verify the token: it must match the token generated for THIS request's
+  // assigned authority (or the Admin). This is what restricts the action to
+  // only the correct approval authority, without requiring a login.
+  const validAuthorities=[req.mgEmail];
+  if(req.mgEmail==='neel_aamir'){ validAuthorities.push('neel.savla@grayquest.com','aamir.khan@grayquest.com'); }
+  ADMIN_EMAILS.forEach(a=>validAuthorities.push(a));
+  let ok=false;
+  for(const auth of validAuthorities){
+    if(token===actionToken(id, auth)){ ok=true; break; }
+  }
+  if(!ok){
+    showActionPopup('error',`This approval link is invalid or not authorised. Only the assigned approval authority can action request ${id}.`);
+    return;
+  }
+
+  // Token is valid — process the action directly from the email
   if(act==='approve'){
-    finalizeInAppAction(req,'Approved','');
-    showActionPopup('approved',`Request ${id} has been approved. A confirmation email has been sent.`);
+    await finalizeInAppAction(req,'Approved','');
+    showActionPopup('approved',`Request ${id} has been APPROVED. A confirmation email has been sent to the requester.`);
   } else if(act==='reject'){
     promptRejectComment(req,'email');
   }
@@ -581,6 +584,22 @@ let GAS_URL = (DEFAULT_GAS_URL||'').trim();
 if(!GAS_URL){ try{ GAS_URL = localStorage.getItem('lc_gas_url')||''; }catch(e){} }
 function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
 function isGASConfigured(){ return GAS_URL && GAS_URL.startsWith('https://script.google.com'); }
+
+// ── Secret action token ──────────────────────────────────────────────────────
+// A token is derived from the request id + the assigned authority email + a
+// fixed secret. Only the email sent to that authority carries the matching
+// token, so an email Approve/Reject works WITHOUT login, yet only the correct
+// authority (whoever holds that email) can act. Admin's token also works.
+const ACTION_SECRET='GQ-LoanClosure-2026-Secret-Key';
+function actionToken(reqId, authEmail){
+  const s=(reqId+'|'+(authEmail||'').toLowerCase()+'|'+ACTION_SECRET);
+  let h=0;
+  for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
+  // second pass for a longer, less guessable token
+  let h2=5381;
+  for(let i=0;i<s.length;i++){ h2=((h2<<5)+h2)+s.charCodeAt(i); h2|=0; }
+  return (Math.abs(h).toString(36)+Math.abs(h2).toString(36)).toUpperCase();
+}
 
 function save(){
   try{localStorage.setItem('lc_reqs',JSON.stringify(reqs));localStorage.setItem('lc_mails',JSON.stringify(mails));}catch(e){}
@@ -963,8 +982,1180 @@ async function raise(){
 
   const subject=`Loan Closure Approval – App ID ${newReq.appId}`;
   const siteUrl=location.origin+location.pathname;
-  const approveLink=`${siteUrl}?act=approve&id=${encodeURIComponent(reqId)}`;
-  const rejectLink=`${siteUrl}?act=reject&id=${encodeURIComponent(reqId)}`;
+  const tok=actionToken(reqId, mgEmail);
+  const approveLink=`${siteUrl}?act=approve&id=${encodeURIComponent(reqId)}&t=${tok}`;
+  const rejectLink=`${siteUrl}?act=reject&id=${encodeURIComponent(reqId)}&t=${tok}`;
+  const htmlBody=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
+    <div style="background:#007FFF;color:#fff;padding:18px 24px">
+      <h2 style="margin:0;font-size:18px">Loan Closure Approval Request</h2>
+      <p style="margin:4px 0 0;font-size:13px;opacity:0.9">${reqId} · App ID ${newReq.appId}</p>
+    </div>
+    <div style="padding:24px;background:#fff">
+      <p style="font-size:14px;color:#333">Dear Approver,<br/>A new loan closure shortfall approval request has been raised by <b>${spoc}</b>.</p>
+      <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:6px 0;color:#888">App ID:</td><td style="font-weight:600">${newReq.appId}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">Amount:</td><td style="font-weight:700;color:#007FFF">₹${amt.toLocaleString('en-IN')}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">NBFC:</td><td>${nbfc}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">Type:</td><td>${typ}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">Department:</td><td>${dept}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">Remarks:</td><td>${rmk}</td></tr>
+      </table>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin-top:8px"><tr>
+        <td style="padding:6px" width="50%" align="center">
+          <a href="${approveLink}" style="display:block;background:#16a34a;color:#ffffff;text-decoration:none;padding:14px 0;border-radius:8px;font-size:15px;font-weight:700;text-align:center">✓ APPROVE</a>
+        </td>
+        <td style="padding:6px" width="50%" align="center">
+          <a href="${rejectLink}" style="display:block;background:#dc2626;color:#ffffff;text-decoration:none;padding:14px 0;border-radius:8px;font-size:15px;font-weight:700;text-align:center">✕ REJECT</a>
+        </td>
+      </tr></table>
+      <p style="font-size:11px;color:#aaa;text-align:center;margin:14px 0 0">Tapping a button opens the approval portal. You may be asked to log in first. Reject will ask for a mandatory reason.</p>
+    </div>
+  </div>`;
+  const textBody=`Approval Request: ${reqId}\nApp ID: ${newReq.appId}\nAmount: ₹${amt}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
+
+  await sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, appIdFileData, 'App ID '+newReq.appId);
+
+  tokOk.textContent=`Request ${reqId} submitted successfully! Auto-synced to Sheet and email sent.`;
+  tokOk.style.display='block';
+
+  document.getElementById('appId').value='';
+  document.getElementById('amt').value='';
+  document.getElementById('rmk').value='';
+  clearAppIdFile();
+  upd();
+  updBadge();
+
+  sbtn.disabled=false; sbtn.innerHTML='<i class="ti ti-send"></i> Submit for Approval';
+}
+
+async function sendEmail(to, cc, subject, htmlBody, textBody, attachment, threadKey){
+  if(!isGASConfigured()) return false;
+  try{
+    const payload={to, cc:cc||'', subject, html:htmlBody||'', text:textBody||''};
+    if(threadKey) payload.threadKey=threadKey;
+    if(attachment&&attachment.base64){
+      payload.attachment={
+        name:attachment.name||'attachment.xlsx',
+        mimeType:attachment.mimeType||'application/octet-stream',
+        base64:attachment.base64
+      };
+    }
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify(payload)
+    });
+    const txt=await res.text();
+    return txt.includes('SENT')||txt.includes('REPLIED')||txt.includes('sent');
+  }catch(e){return false;}
+}
+async function sendGmail(to, cc, subject, htmlBody, textBody, attachment, threadKey){
+  return sendEmail(to, cc, subject, htmlBody, textBody, attachment, threadKey);
+}
+
+async function syncSheet(row){
+  sync('Saving locally…','p');
+  if(isGASConfigured()){
+    try{
+      const res=await fetch(GAS_URL,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify({action:'appendSheet',sheetId:SHEET_ID,tab:SHEET_TAB,headers:SHEET_HEADERS,row})
+      });
+      const txt=await res.text();
+      if(txt.includes('APPENDED')||txt.includes('OK'))sync('Synced to Sheet ✓','ok');
+      else sync('Saved locally','ok');
+    }catch(e){sync('Saved locally','ok');}
+  } else {
+    sync('Saved locally','ok');
+  }
+}
+
+async function syncSheetStatus(requestId, status, actionDate, rejectReason){
+  if(!isGASConfigured())return false;
+  try{
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'updateStatus',sheetId:SHEET_ID,tab:SHEET_TAB,requestId,status,actionDate,rejectReason:rejectReason||''})
+    });
+    const txt=await res.text();
+    return txt.includes('UPDATED');
+  }catch(e){return false;}
+}
+
+function sync(msg,type){
+  const el=document.getElementById('syncst');
+  const cls=type==='ok'?'sok':type==='p'?'sp':'sf';
+  el.innerHTML=`<span class="sdot ${cls}"></span>${msg}`;
+}
+
+function showSetupModal(){
+  if(document.getElementById('setup-modal'))return;
+  const modal=document.createElement('div');
+  modal.id='setup-modal';
+  modal.className='modal-ov';
+  modal.innerHTML=`
+    <div style="background:#fff;border-radius:16px;padding:2rem;max-width:500px;width:100%;text-align:left">
+      <div style="font-size:16px;font-weight:700;color:#111;margin-bottom:8px">⚙️ Google Apps Script Configuration</div>
+      <p style="font-size:13px;color:#555;margin-bottom:12px">Enter your deployed Apps Script Web App URL below:</p>
+      <input id="gas-url-input" type="url" placeholder="https://script.google.com/macros/s/.../exec" value="${GAS_URL}" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;box-sizing:border-box"/>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="document.getElementById('setup-modal').remove()" style="background:#f0f0ec;border:none;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;font-weight:600">Close</button>
+        <button onclick="saveGASFromModal()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:9px 16px;font-size:13px;cursor:pointer;font-weight:600">Save URL</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function saveGASFromModal(){
+  const url=document.getElementById('gas-url-input').value.trim();
+  if(!url){alert('Please enter a valid URL.');return;}
+  saveGASUrl(url);
+  document.getElementById('setup-modal').remove();
+  alert('Email Setup URL saved successfully!');
+}
+
+let dashFStatus='Pending';
+let chartMonthly=null, chartAmount=null, chartStatus=null, chartAuthority=null;
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function populateYearFilter(){
+  const sel=document.getElementById('dash-year');
+  const curYear=new Date().getFullYear();
+  sel.innerHTML=`<option value="${curYear}">${curYear}</option>`;
+}
+function dashFilter(v){dashFStatus=v;renderDash();}
+function destroyChart(c){if(c){try{c.destroy();}catch(e){}}}
+
+function renderDash(){
+  const approved=reqs.filter(r=>r.status==='Approved');
+  const pending=reqs.filter(r=>r.status==='Pending');
+  document.getElementById('d-total').textContent=reqs.length;
+  document.getElementById('d-pending').textContent=pending.length;
+  document.getElementById('d-approved').textContent=approved.length;
+  document.getElementById('d-amt').textContent='₹'+approved.reduce((s,r)=>s+r.amt,0).toLocaleString('en-IN');
+
+  const breakdown=document.getElementById('d-authority-breakdown');
+  breakdown.innerHTML=Object.entries(mgrNames).filter(([k])=>k!=='neel_aamir').map(([email,name])=>{
+    const mine=reqs.filter(r=>r.mgEmail===email);
+    const p=mine.filter(r=>r.status==='Pending');
+    const a=mine.filter(r=>r.status==='Approved');
+    return `<div style="background:${p.length>0?'#fffbeb':'#f8f8f5'};border:1px solid ${p.length>0?'#fde68a':'#e5e5e0'};border-radius:9px;padding:12px 14px">
+      <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:6px">${name}</div>
+      <div style="display:flex;gap:12px">
+        <div><div style="font-size:18px;font-weight:700;color:${p.length>0?'#a16207':'#aaa'}">${p.length}</div><div style="font-size:10px;color:#aaa">Pending</div></div>
+        <div><div style="font-size:18px;font-weight:700;color:#15803d">${a.length}</div><div style="font-size:10px;color:#aaa">Approved</div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const list=document.getElementById('d-list');
+  const filtered=dashFStatus==='all'?reqs:reqs.filter(r=>r.status===dashFStatus);
+  if(!filtered.length){list.innerHTML='<div class="empty">No requests match this filter.</div>';return;}
+  list.innerHTML=[...filtered].reverse().map(r=>`
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">${r.id} · App ID: ${r.appId}</div><div class="cs">${r.date} ${r.time} · SPOC: ${r.spoc}</div></div>
+        <span class="badge b-${r.status.toLowerCase()}">${r.status}</span>
+      </div>
+      <div class="cmeta">
+        <div><div class="ml">NBFC</div><div class="mv">${r.nbfc}</div></div>
+        <div><div class="ml">Amount</div><div class="mv amt">₹${r.amt.toLocaleString('en-IN')}</div></div>
+        <div><div class="ml">Type</div><div class="mv">${r.typ}</div></div>
+        <div><div class="ml">Authority</div><div class="mv">${mgrNames[r.mgEmail]||r.mgEmail}</div></div>
+      </div>
+    </div>`).join('');
+}
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Loan Closure Approval System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+
+<style>
+:root{--brand:#007FFF;--brand-dark:#0066cc;--brand-light:#e5f2ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#ffffff;color:#0a0a0a;min-height:100vh;letter-spacing:-0.01em}
+.app{max-width:1180px;margin:0 auto;padding:1.75rem 2rem}
+.hdr{margin-bottom:1.75rem}
+.hdr h1{font-size:25px;font-weight:700;color:#0a0a0a;letter-spacing:-0.02em}
+.hdr p{font-size:15px;color:#888;margin-top:4px}
+.tabs{display:flex;gap:0;border-bottom:1px solid #eaeaea;margin-bottom:0}
+.tab{padding:13px 24px;font-size:15px;font-weight:600;cursor:pointer;color:#888;background:none;border:none;border-bottom:2px solid transparent;transition:all .15s;font-family:'Inter',sans-serif}
+.tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+.tab:hover{color:var(--brand-dark)}
+.panel{display:none;background:#fff;border:1px solid #eaeaea;border-top:none;border-radius:0 0 16px 16px;padding:2rem 2.25rem}
+.panel.active{display:block}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.fg{display:flex;flex-direction:column;gap:7px}
+.fg.full{grid-column:1/-1}
+label{font-size:13px;font-weight:600;color:#888;letter-spacing:.05em;text-transform:uppercase}
+input,select,textarea{width:100%;font-family:'Inter',sans-serif;font-size:15px;padding:12px 14px;border:1px solid #e0e0e0;border-radius:10px;background:#fafafa;color:#0a0a0a;transition:border .15s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--brand);background:#fff}
+textarea{resize:vertical;min-height:90px}
+.abox{background:#fffbeb;border:1px solid #f3d77a;border-radius:12px;padding:16px 20px;margin:18px 0;display:flex;align-items:center;justify-content:space-between}
+.alabel{font-size:14px;color:#92680b;font-weight:500}
+.aamt{font-size:26px;font-weight:700;color:#92680b}
+.btn-submit{background:var(--brand);border:none;border-radius:999px;padding:13px 34px;font-size:15px;cursor:pointer;color:#fff;font-family:'Inter',sans-serif;font-weight:600;transition:background .15s}
+.btn-submit:hover{background:var(--brand-dark)}
+.btn-submit:disabled{opacity:.5;cursor:default}
+.btn-approve{background:#dcfce7;border:1px solid #86efac;border-radius:999px;padding:9px 18px;font-size:14px;cursor:pointer;color:#15803d;font-family:'Inter',sans-serif;font-weight:600}
+.btn-reject{background:#fee2e2;border:1px solid #fca5a5;border-radius:999px;padding:9px 18px;font-size:14px;cursor:pointer;color:#dc2626;font-family:'Inter',sans-serif;font-weight:600}
+.card{background:#fff;border:1px solid #eaeaea;border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:14px}
+.card:hover{border-color:var(--brand)}
+.ch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.ct{font-size:17px;font-weight:700;color:#0a0a0a}
+.cs{font-size:13px;color:#aaa;margin-top:3px}
+.badge{font-size:13px;font-weight:600;padding:4px 12px;border-radius:20px}
+.b-pending{background:#fef9c3;color:#a16207}
+.b-approved{background:#dcfce7;color:#15803d}
+.b-rejected{background:#fee2e2;color:#dc2626}
+.cmeta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.ml{font-size:12px;font-weight:600;color:#aaa;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px}
+.mv{font-size:15px;color:#0a0a0a;font-weight:500}
+.mv.amt{color:#a16207;font-size:17px;font-weight:600}
+.cact{display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #f0f0f0;padding-top:14px}
+.remarks{font-size:14px;color:#888;margin-top:8px;font-style:italic}
+.rejnote{font-size:14px;color:#dc2626;margin-top:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px}
+.empty{text-align:center;padding:3.5rem 1rem;color:#bbb;font-size:15px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:1.75rem}
+.sc{background:#fafafa;border:1px solid #eaeaea;border-radius:12px;padding:1.15rem}
+.sl{font-size:12px;font-weight:600;color:#aaa;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}
+.sv{font-size:28px;font-weight:700;color:#0a0a0a}
+.sv.warn{color:#a16207}
+.sv.ok{color:#15803d}
+.toast{border-radius:10px;padding:14px 18px;font-size:14px;margin-bottom:1rem;display:none;font-weight:500}
+.ts{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d}
+.td{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
+.fr{display:flex;gap:8px;margin-bottom:1rem;align-items:center}
+.fr select{width:auto;font-size:14px;padding:8px 12px}
+.syncrow{display:flex;align-items:center;gap:6px;font-size:11px;color:#aaa}
+.sdot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.sok{background:#22c55e}.sp{background:#f59e0b}.sf{background:#ef4444}
+.sheet-note{background:var(--brand-light);border:1px solid #b3d9ff;border-radius:9px;padding:10px 14px;font-size:12px;color:var(--brand-dark);margin-bottom:1rem}
+.modal-ov{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#fff;border-radius:20px;padding:1.75rem;max-width:440px;width:100%}
+@media(max-width:600px){.form-grid,.cmeta,.stats{grid-template-columns:1fr 1fr}.fg.full{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr" style="display:flex;align-items:center;gap:14px">
+    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><circle cx='24' cy='24' r='24' fill='%23007FFF'/><text x='50%25' y='55%25' font-size='20' font-weight='bold' fill='white' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>GQ</text></svg>" alt="GrayQuest" id="gq-logo-header" style="width:48px;height:48px;border-radius:50%;flex-shrink:0"/>
+    <div>
+      <h1><i class="ti ti-file-check" style="vertical-align:-3px;margin-right:6px"></i>Loan Closure Approval System</h1>
+      <p>Parent Support · Auto-sync to &nbsp;<a href="https://docs.google.com/spreadsheets/d/1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo/edit" target="_blank" style="color:#007FFF;text-decoration:none;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> &nbsp;·&nbsp; <span onclick="showSetupModal()" style="color:#f59e0b;cursor:pointer;font-weight:600;font-size:12px">⚙️ Email Setup</span></p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="go('raise')"><i class="ti ti-file-plus"></i> Raise Request</button>
+    <button class="tab" id="tab-mgr" onclick="go('mgr')" style="display:none"><i class="ti ti-shield-check"></i> Approval Authority <span id="pbadge" style="background:#fef9c3;color:#a16207;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;font-weight:600">0</span></button>
+    <button class="tab" id="tab-dash" onclick="go('dash')" style="display:none"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
+    <button class="tab" id="tab-login" onclick="go('login')" style="margin-left:auto;color:#007FFF"><i class="ti ti-lock"></i> Authority Login</button>
+    <button class="tab" id="tab-logout" onclick="doLogout()" style="display:none;margin-left:auto;color:#dc2626"><i class="ti ti-logout"></i> Logout</button>
+  </div>
+
+  <!-- RAISE REQUEST -->
+  <div id="p-raise" class="panel active">
+    <div id="tok-ok" class="toast ts"></div>
+    <div id="tok-err" class="toast td"></div>
+    <div class="sheet-note"><i class="ti ti-table"></i> On submit, this entry will be appended to your <a href="https://docs.google.com/spreadsheets/d/1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo/edit" target="_blank" style="color:#007FFF;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> and a notification email will be sent via Gmail.</div>
+    <div class="form-grid">
+      <div class="fg"><label>App ID / Loan ID</label>
+        <input type="text" id="appId" placeholder="Single ID e.g. 1549692, or attach Excel below"/>
+        <div style="margin-top:6px">
+          <label for="appIdFile" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#007FFF;cursor:pointer;text-transform:none;letter-spacing:0"><i class="ti ti-paperclip"></i> Attach Excel (many App IDs)</label>
+          <input type="file" id="appIdFile" accept=".xlsx,.xls,.csv" onchange="handleAppIdFile(this)" style="display:none"/>
+          <div id="appIdFileInfo" style="display:none;align-items:center;gap:8px;margin-top:6px;background:#e5f2ff;border:1px solid #b3d9ff;border-radius:6px;padding:6px 10px;font-size:12px;color:#007FFF">
+            <i class="ti ti-file-spreadsheet"></i>
+            <span id="appIdFileName" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+            <span id="appIdFileSize" style="color:#60a5fa;font-size:11px"></span>
+            <i class="ti ti-x" onclick="clearAppIdFile()" style="cursor:pointer;color:#dc2626"></i>
+          </div>
+          <div style="font-size:10px;color:#aaa;margin-top:3px">If an Excel is attached, the App ID box can say e.g. "Batch — 42 IDs". Max 5 MB.</div>
+        </div>
+      </div>
+      <div class="fg"><label>NBFC / Lender</label>
+        <select id="nbfc" onchange="handleNbfcChange(this.value)">
+          <option value="">Select NBFC</option>
+          <option>None</option>
+          <option>Ratnaafin Capital Pvt Ltd</option>
+          <option>Ratnaafin Capital Pvt Ltd FSF</option>
+          <option>Arka Fincap</option>
+          <option>Western Capital</option>
+          <option>Western Capital - FSF</option>
+          <option>Western Capital Edtech</option>
+          <option>Aditya Birla Finance Limited</option>
+          <option>ABFL</option>
+          <option>Axis Finance</option>
+          <option>Axis Finance FSF</option>
+          <option>Avanse</option>
+          <option>Fintree</option>
+          <option>Mirae</option>
+          <option>Ratnafin</option>
+          <option>CSB</option>
+          <option>Refund to Parent / Institute</option>
+          <option value="other">Other</option>
+        </select>
+        <input type="text" id="nbfcOther" placeholder="Enter NBFC / Lender name (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb"/>
+      </div>
+      <div class="fg"><label>Approval Amount (₹)</label><input type="number" id="amt" placeholder="e.g. 500" oninput="upd()"/></div>
+      <div class="fg"><label>Type</label>
+        <select id="typ" onchange="handleTypChange(this.value)">
+          <option value="">Select type</option>
+          <option>Loan Closure Shortfall</option>
+          <option>Foreclosure Shortfall</option>
+          <option>Dropout Shortfall</option>
+          <option>EMI Funded</option>
+          <option>Subvention Bear</option>
+          <option>WHJ</option>
+          <option>Refund to Parent (GQ Pocket)</option>
+          <option>Refund to Institute</option>
+          <option>Double Disbursement Shortfall</option>
+          <option>Late Payment Charges Waiver</option>
+          <option>Mandate Charges Waiver</option>
+          <option>Bounce Charges Waiver</option>
+          <option>POS Waiver</option>
+          <option>Settlement Waiver</option>
+          <option>Wrong Disbursement</option>
+          <option>FC Waiver</option>
+          <option>Subvention Waiver</option>
+          <option>Retention Waiver</option>
+          <option value="other">Other</option>
+        </select>
+        <input type="text" id="typOther" placeholder="Enter type (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb"/>
+      </div>
+      <div class="fg"><label>SPOC Email (Your Email)</label>
+        <input type="email" id="spoc" placeholder="Enter your email (e.g. yourname@grayquest.com)"/>
+      </div>
+      <div class="fg full"><label>Remarks / Reason for Approval</label>
+        <textarea id="rmk" placeholder="Explain why manager approval is needed for this amount..."></textarea>
+      </div>
+      <div class="fg"><label>Department / Team</label>
+        <select id="department" onchange="handleDeptChange(this.value)">
+          <option value="">Select department</option>
+          <option>GQ Finance Operation</option>
+          <option>Collection</option>
+          <option>Recovery</option>
+          <option>KAM</option>
+          <option>Support</option>
+          <option>Disbursement</option>
+          <option>Business</option>
+          <option>NACH</option>
+          <option>SALES</option>
+          <option value="other">Other</option>
+        </select>
+        <input type="text" id="deptOther" placeholder="Enter Department / Team name (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb"/>
+      </div>
+      <div class="fg"><label>Approval Authority <span style="text-transform:none;letter-spacing:0;color:#007FFF;font-weight:600">🔒 auto-set by Department</span></label>
+        <select id="mgEmail" disabled style="background:#f0f0ec;color:#555;cursor:not-allowed">
+          <option value="">Select recipient</option>
+          <option value="aamir.khan@grayquest.com">Aamir Khan — aamir.khan@grayquest.com</option>
+          <option value="neel.savla@grayquest.com">Neel Savla — neel.savla@grayquest.com</option>
+          <option value="sakshee.thanekar@grayquest.com">Sakshee Thanekar — sakshee.thanekar@grayquest.com</option>
+          <option value="ranjeet@grayquest.com">Ranjeet Singh Rawat — ranjeet@grayquest.com</option>
+          <option value="finance.communication@grayquest.com">GQ Finance Communication — finance.communication@grayquest.com</option>
+          <option value="garvit@grayquest.com">Garvit Mathur — garvit@grayquest.com</option>
+          <option value="aashi.mehta@grayquest.com">Aashi Mehta — aashi.mehta@grayquest.com</option>
+        </select>
+      </div>
+      <div class="fg"><label>Your Email (CC)</label>
+        <select id="ccSelect" onchange="handleCCChange(this.value)">
+          <option value="">Select CC recipient</option>
+          <option value="GQRecon@grayquest.com">GQRecon — GQRecon@grayquest.com</option>
+          <option value="recovery@grayquest.com">Recovery — recovery@grayquest.com</option>
+          <option value="dropout.refunds@grayquest.com">Dropout Refunds — dropout.refunds@grayquest.com</option>
+          <option value="finance.communication@grayquest.com">GQ Finance Communication — finance.communication@grayquest.com</option>
+          <option value="gqsupport@grayquest.com">GQ Support — gqsupport@grayquest.com</option>
+          <option value="other">Other (enter manually)</option>
+        </select>
+        <input type="text" id="ccEmail" placeholder="Enter email addresses, comma separated" style="margin-top:6px;display:none"/>
+      </div>
+    </div>
+
+    <div class="abox">
+      <div>
+        <div class="alabel"><i class="ti ti-alert-triangle"></i> Approval Amount Required</div>
+        <div style="font-size:11px;color:#a16207;margin-top:2px">Manager sign-off needed before processing this transfer</div>
+      </div>
+      <div class="aamt" id="adsp">₹ 0</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:1rem">
+      <div class="syncrow" id="syncst"></div>
+      <button class="btn-submit" onclick="raise()" id="sbtn"><i class="ti ti-send"></i> Submit for Approval</button>
+    </div>
+  </div>
+
+  <!-- AUTHORITY LOGIN -->
+  <div id="p-login" class="panel">
+    <div style="max-width:380px;margin:0 auto;text-align:center;padding:1rem 0">
+      <div style="font-size:18px;font-weight:700;color:#111;margin-bottom:4px">Approval Authority Login</div>
+      <div style="font-size:12px;color:#888;margin-bottom:1.25rem">Select your name and enter your password. Only registered approval authorities can access the Dashboard and Approve/Reject portal.</div>
+
+      <div id="login-err" class="toast td" style="text-align:left"></div>
+
+      <div style="text-align:left">
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Your Name</label>
+        <select id="login-email" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box">
+          <option value="">Select your name</option>
+        </select>
+
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Password</label>
+        <input id="login-pw" type="password" placeholder="Enter your password" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;box-sizing:border-box" onkeydown="if(event.key==='Enter')doPasswordLogin()"/>
+
+        <button onclick="doPasswordLogin()" style="width:100%;background:#007FFF;color:#fff;border:none;border-radius:999px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Log In</button>
+      </div>
+
+      <div style="font-size:11px;color:#aaa;margin-top:14px">Registered authorities: Aamir Khan · Neel Savla · Sakshee Thanekar · Ranjeet Singh Rawat · Finance Communication · Garvit Mathur · Aashi Mehta</div>
+    </div>
+  </div>
+
+  <!-- APPROVAL AUTHORITY (Protected) -->
+  <div id="p-mgr" class="panel">
+    <div id="mgr-dashboard">
+      <div style="display:flex;justify-content:space-between;align-items:center;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 16px;margin-bottom:1.25rem">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;background:#15803d;border-radius:50%;display:flex;align-items:center;justify-content:center">
+            <i class="ti ti-user-check" style="color:#fff;font-size:16px"></i>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#15803d;display:flex;align-items:center;gap:6px">
+              <span id="logged-name"></span>
+              <span id="admin-badge" style="display:none;background:#007FFF;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:.04em">ADMIN</span>
+            </div>
+            <div style="font-size:11px;color:#16a34a" id="logged-email"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button id="btn-admin-pw" onclick="toggleAdminPw()" style="display:none;background:none;border:1px solid #93c5fd;border-radius:7px;padding:5px 12px;font-size:12px;color:#007FFF;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600"><i class="ti ti-lock-cog"></i> Manage Passwords</button>
+          <button onclick="toggleChangePw()" style="background:none;border:1px solid #86efac;border-radius:7px;padding:5px 12px;font-size:12px;color:#15803d;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600"><i class="ti ti-key"></i> Change Password</button>
+          <button onclick="doLogout()" style="background:none;border:1px solid #86efac;border-radius:7px;padding:5px 12px;font-size:12px;color:#15803d;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600"><i class="ti ti-logout"></i> Logout</button>
+        </div>
+      </div>
+
+      <div id="adminpw-box" style="display:none;background:#fff;border:1px solid #93c5fd;border-radius:10px;padding:14px 16px;margin-bottom:1.25rem">
+        <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:10px"><i class="ti ti-shield-lock"></i> Admin — Reset Any Authority's Password</div>
+        <div id="adminpw-err" class="toast td" style="text-align:left"></div>
+        <div id="adminpw-ok" class="toast ts" style="text-align:left"></div>
+        <select id="adminpw-target" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:8px"></select>
+        <input id="adminpw-new" type="password" placeholder="New password (min 6 characters)" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:10px;box-sizing:border-box"/>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="toggleAdminPw()" style="background:#f0f0ec;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Cancel</button>
+          <button onclick="submitAdminPasswordReset()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Reset Password</button>
+        </div>
+      </div>
+
+      <div id="chpw-box" style="display:none;background:#fff;border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px;margin-bottom:1.25rem">
+        <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:10px">Change Password</div>
+        <div id="chpw-err" class="toast td" style="text-align:left"></div>
+        <div id="chpw-ok" class="toast ts" style="text-align:left"></div>
+        <input id="chpw-current" type="password" placeholder="Current password" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:8px;box-sizing:border-box"/>
+        <input id="chpw-new" type="password" placeholder="New password (min 6 characters)" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:8px;box-sizing:border-box"/>
+        <input id="chpw-confirm" type="password" placeholder="Confirm new password" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:10px;box-sizing:border-box"/>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="toggleChangePw()" style="background:#f0f0ec;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Cancel</button>
+          <button onclick="submitChangePassword()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Update Password</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="sc"><div class="sl">My Total</div><div class="sv" id="st-tot">0</div></div>
+        <div class="sc"><div class="sl">My Pending</div><div class="sv warn" id="st-pen">0</div></div>
+        <div class="sc"><div class="sl">My Approved</div><div class="sv ok" id="st-apr">0</div></div>
+        <div class="sc"><div class="sl">My Pending Amt</div><div class="sv warn" id="st-amt">₹0</div></div>
+      </div>
+
+      <div class="fr" style="justify-content:space-between">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:12px;color:#888">Filter:</span>
+          <select onchange="filt(this.value)"><option value="all">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span id="sync-status" style="font-size:12px;color:#aaa"></span>
+          <button onclick="loadRequestsFromSheet()" style="background:#007FFF;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
+        </div>
+      </div>
+      <div id="mgr-toast" class="toast"></div>
+      <div id="rlist"><div class="empty"><i class="ti ti-inbox" style="font-size:36px;display:block;margin-bottom:8px"></i>No requests assigned to you yet.</div></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD (Protected) -->
+  <div id="p-dash" class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#111">All Approvals Dashboard</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">Live overview · monthly trends · all approval authorities</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="dash-year" onchange="renderDash()" style="font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:7px;background:#fafaf8"></select>
+        <button onclick="renderDash()" style="background:#111;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
+      </div>
+    </div>
+
+    <div class="stats" style="margin-bottom:1.5rem">
+      <div class="sc"><div class="sl">Total Requests</div><div class="sv" id="d-total">0</div></div>
+      <div class="sc"><div class="sl">Pending</div><div class="sv warn" id="d-pending">0</div></div>
+      <div class="sc"><div class="sl">Approved</div><div class="sv ok" id="d-approved">0</div></div>
+      <div class="sc"><div class="sl">Total Approved Amt</div><div class="sv ok" id="d-amt">₹0</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
+        <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:2px">Monthly Requests</div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:12px">Approved · Pending · Rejected per month</div>
+        <div style="position:relative;height:200px"><canvas id="chart-monthly"></canvas></div>
+      </div>
+      <div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
+        <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:2px">Monthly Approval Amount (₹)</div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:12px">Total amount approved each month</div>
+        <div style="position:relative;height:200px"><canvas id="chart-amount"></canvas></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem">
+      <div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
+        <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:2px">Status Breakdown</div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:12px">Distribution of all requests</div>
+        <div style="position:relative;height:200px"><canvas id="chart-status"></canvas></div>
+      </div>
+      <div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
+        <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:2px">Requests by Authority</div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:12px">Total assigned to each approver</div>
+        <div style="position:relative;height:200px"><canvas id="chart-authority"></canvas></div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Pending by Authority</div>
+    <div id="d-authority-breakdown" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:1.5rem"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.06em;text-transform:uppercase">Requests</div>
+      <select onchange="dashFilter(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:7px;background:#fafaf8">
+        <option value="Pending">Pending Only</option>
+        <option value="all">All Requests</option>
+        <option value="Approved">Approved</option>
+        <option value="Rejected">Rejected</option>
+      </select>
+    </div>
+    <div id="d-list"><div class="empty"><i class="ti ti-chart-bar" style="font-size:36px;display:block;margin-bottom:8px"></i>No requests yet.</div></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<script>
+const SHEET_ID='1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo';
+const SHEET_TAB='Sheet1';
+const SHEET_HEADERS=['Request ID','Date','Time','App ID','NBFC / Lender','Amount','Mode','Type','SPOC','Department / Team','Remarks','Approval Authority (TO)','CC Email','Status','Attachment','Action Date','Reject Reason'];
+let reqs=[],mails=[],fStatus='all',currentIdentity='';
+
+const mgrNames={
+  'neel_aamir'                         :'Neel Savla & Aamir Khan',
+  'aamir.khan@grayquest.com'           :'Aamir Khan',
+  'neel.savla@grayquest.com'           :'Neel Savla',
+  'sakshee.thanekar@grayquest.com'     :'Sakshee Thanekar',
+  'ranjeet@grayquest.com'              :'Ranjeet Singh Rawat',
+  'finance.communication@grayquest.com':'GQ Finance Communication',
+  'garvit@grayquest.com'               :'Garvit Mathur',
+  'aashi.mehta@grayquest.com'          :'Aashi Mehta'
+};
+
+const deptToAuthority={
+  'GQ Finance Operation':'aamir.khan@grayquest.com',
+  'Business'            :'aamir.khan@grayquest.com',
+  'Collection'          :'ranjeet@grayquest.com',
+  'KAM'                 :'ranjeet@grayquest.com',
+  'Recovery'            :'ranjeet@grayquest.com',
+  'Support'             :'garvit@grayquest.com',
+  'Disbursement'        :'garvit@grayquest.com',
+  'NACH'                :'aashi.mehta@grayquest.com',
+  'SALES'               :'aamir.khan@grayquest.com'
+};
+
+function autoSelectAuthority(dept){
+  const sel=document.getElementById('mgEmail');
+  const target=deptToAuthority[dept];
+  if(!target){sel.value='';return;}
+  if([...sel.options].some(o=>o.value===target)) sel.value=target;
+}
+
+const ADMIN_EMAILS=['finance.communication@grayquest.com'];
+function isAdmin(identity){ return ADMIN_EMAILS.includes(identity); }
+
+function isMine(req, identity){
+  if(isAdmin(identity)) return true;
+  return req.mgEmail===identity;
+}
+
+let appIdFileData=null;
+function handleAppIdFile(input){
+  const file=input.files&&input.files[0];
+  if(!file){clearAppIdFile();return;}
+  if(file.size>5*1024*1024){
+    alert('File is larger than 5 MB. Please attach a smaller Excel/CSV.');
+    input.value='';return;
+  }
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const base64=String(reader.result).split(',')[1]||'';
+    appIdFileData={
+      name:file.name,
+      mimeType:file.type||'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      size:file.size,
+      base64
+    };
+    document.getElementById('appIdFileName').textContent=file.name;
+    document.getElementById('appIdFileSize').textContent=(file.size/1024).toFixed(0)+' KB';
+    document.getElementById('appIdFileInfo').style.display='flex';
+  };
+  reader.onerror=()=>{alert('Could not read the file. Please try again.');clearAppIdFile();};
+  reader.readAsDataURL(file);
+}
+
+function clearAppIdFile(){
+  appIdFileData=null;
+  const inp=document.getElementById('appIdFile');
+  if(inp)inp.value='';
+  const info=document.getElementById('appIdFileInfo');
+  if(info)info.style.display='none';
+}
+
+function getSpoc(){ return document.getElementById('spoc').value.trim(); }
+function handleTypChange(val){
+  const inp=document.getElementById('typOther');
+  if(val==='other'){inp.style.display='block';inp.focus();}
+  else{inp.style.display='none';inp.value='';}
+}
+function getTyp(){
+  const sel=document.getElementById('typ').value;
+  if(sel==='other') return document.getElementById('typOther').value.trim();
+  return sel;
+}
+function handleNbfcChange(val){
+  const inp=document.getElementById('nbfcOther');
+  if(val==='other'){inp.style.display='block';inp.focus();}
+  else{inp.style.display='none';inp.value='';}
+}
+function getNbfc(){
+  const sel=document.getElementById('nbfc').value;
+  if(sel==='other') return document.getElementById('nbfcOther').value.trim();
+  return sel;
+}
+function handleDeptChange(val){
+  const inp=document.getElementById('deptOther');
+  if(val==='other'){inp.style.display='block';inp.focus();}
+  else{inp.style.display='none';inp.value='';}
+  autoSelectAuthority(val);
+}
+function getDept(){
+  const sel=document.getElementById('department').value;
+  if(sel==='other') return document.getElementById('deptOther').value.trim();
+  return sel;
+}
+function handleCCChange(val){
+  const input=document.getElementById('ccEmail');
+  if(val==='other'){input.style.display='block';input.value='';input.required=true;}
+  else{input.style.display='none';input.value=val;input.required=false;}
+}
+function getCC(){
+  const sel=document.getElementById('ccSelect').value;
+  if(sel==='other') return document.getElementById('ccEmail').value.trim();
+  return sel;
+}
+
+try{const r=localStorage.getItem('lc_reqs');if(r)reqs=JSON.parse(r);}catch(e){}
+try{const m=localStorage.getItem('lc_mails');if(m)mails=JSON.parse(m);}catch(e){}
+
+window.addEventListener('load',()=>{
+  populateLoginSelect();
+  updStats();
+  updBadge();
+  handleEmailAction();
+});
+
+// ── Handle Approve/Reject links clicked from the email ───────────────────────
+let pendingEmailAction=null; // {act, id} held until the authority logs in
+function getParam(name){
+  try{return new URLSearchParams(location.search).get(name);}catch(e){return null;}
+}
+async function handleEmailAction(){
+  const act=getParam('act');
+  const id=getParam('id');
+  if(!act||!id) return;
+  // clean the URL so a refresh doesn't re-trigger
+  try{history.replaceState({},document.title,location.origin+location.pathname);}catch(e){}
+
+  // No login needed — the secret token in the link proves this is the
+  // correct authority's email. Verify it before doing anything.
+  await runEmailAction(act, id, getParam('t'));
+}
+
+async function runEmailAction(act, id, token){
+  // Always pull the freshest data from the Sheet first (multi-user correctness)
+  await loadRequestsFromSheet(true);
+  const req=reqs.find(r=>r.id===id);
+  if(!req){
+    showActionPopup('error',`Request ${id} not found. It may have been deleted.`);
+    return;
+  }
+  if(req.status && req.status!=='Pending'){
+    showActionPopup('info',`Request ${id} is already ${req.status.toLowerCase()}. No further action is needed.`);
+    return;
+  }
+  // Verify the token: it must match the token generated for THIS request's
+  // assigned authority (or the Admin). This is what restricts the action to
+  // only the correct approval authority, without requiring a login.
+  const validAuthorities=[req.mgEmail];
+  if(req.mgEmail==='neel_aamir'){ validAuthorities.push('neel.savla@grayquest.com','aamir.khan@grayquest.com'); }
+  ADMIN_EMAILS.forEach(a=>validAuthorities.push(a));
+  let ok=false;
+  for(const auth of validAuthorities){
+    if(token===actionToken(id, auth)){ ok=true; break; }
+  }
+  if(!ok){
+    showActionPopup('error',`This approval link is invalid or not authorised. Only the assigned approval authority can action request ${id}.`);
+    return;
+  }
+
+  // Token is valid — process the action directly from the email
+  if(act==='approve'){
+    await finalizeInAppAction(req,'Approved','');
+    showActionPopup('approved',`Request ${id} has been APPROVED. A confirmation email has been sent to the requester.`);
+  } else if(act==='reject'){
+    promptRejectComment(req,'email');
+  }
+}
+
+function showActionPopup(type,msg){
+  const c=type==='approved'?'#16a34a':type==='error'?'#dc2626':'#007FFF';
+  const bg=type==='approved'?'#f0fdf4':type==='error'?'#fef2f2':'#e5f2ff';
+  const icon=type==='approved'?'✓':type==='error'?'✕':'ℹ';
+  const m=document.createElement('div');
+  m.className='modal-ov';
+  m.innerHTML=`<div class="modal-box" style="text-align:center">
+    <div style="width:60px;height:60px;line-height:60px;border-radius:50%;background:${bg};color:${c};font-size:30px;font-weight:800;margin:0 auto 14px">${icon}</div>
+    <div style="font-size:15px;color:#333;line-height:1.5;margin-bottom:18px">${msg}</div>
+    <button onclick="this.closest('.modal-ov').remove()" style="background:#111;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:14px;font-weight:600;cursor:pointer">Close</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwERSrj9v4qDpxJz6ApRwuOTZwyU4rpzn4hisXcuAfA3fbKPA3dTh81ExmgZUHSNDWKLw/exec';
+let GAS_URL = (DEFAULT_GAS_URL||'').trim();
+if(!GAS_URL){ try{ GAS_URL = localStorage.getItem('lc_gas_url')||''; }catch(e){} }
+function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
+function isGASConfigured(){ return GAS_URL && GAS_URL.startsWith('https://script.google.com'); }
+
+// ── Secret action token ──────────────────────────────────────────────────────
+// A token is derived from the request id + the assigned authority email + a
+// fixed secret. Only the email sent to that authority carries the matching
+// token, so an email Approve/Reject works WITHOUT login, yet only the correct
+// authority (whoever holds that email) can act. Admin's token also works.
+const ACTION_SECRET='GQ-LoanClosure-2026-Secret-Key';
+function actionToken(reqId, authEmail){
+  const s=(reqId+'|'+(authEmail||'').toLowerCase()+'|'+ACTION_SECRET);
+  let h=0;
+  for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
+  // second pass for a longer, less guessable token
+  let h2=5381;
+  for(let i=0;i<s.length;i++){ h2=((h2<<5)+h2)+s.charCodeAt(i); h2|=0; }
+  return (Math.abs(h).toString(36)+Math.abs(h2).toString(36)).toUpperCase();
+}
+
+function save(){
+  try{localStorage.setItem('lc_reqs',JSON.stringify(reqs));localStorage.setItem('lc_mails',JSON.stringify(mails));}catch(e){}
+}
+
+// Load ALL requests from the Google Sheet (so every device/authority sees the same data)
+let isLoadingReqs=false;
+async function loadRequestsFromSheet(silent){
+  if(!isGASConfigured())return false;
+  if(isLoadingReqs)return false;
+  isLoadingReqs=true;
+  const statusEl=document.getElementById('sync-status');
+  if(statusEl&&!silent){statusEl.textContent='Syncing requests…';statusEl.style.color='#f59e0b';}
+  try{
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'getRequests',sheetId:SHEET_ID,tab:SHEET_TAB})
+    });
+    const data=await res.json();
+    if(data&&data.ok&&Array.isArray(data.requests)){
+      reqs=data.requests;
+      save();
+      if(statusEl){statusEl.textContent='Synced ✓';statusEl.style.color='#15803d';}
+      renderReqs();
+      updStats();
+      updBadge();
+      isLoadingReqs=false;
+      return true;
+    }
+  }catch(e){
+    if(statusEl){statusEl.textContent='Sync failed (offline)';statusEl.style.color='#dc2626';}
+  }
+  isLoadingReqs=false;
+  return false;
+}
+function upd(){const v=parseFloat(document.getElementById('amt').value)||0;document.getElementById('adsp').textContent='₹ '+v.toLocaleString('en-IN');}
+function updBadge(){
+  const p=reqs.filter(r=>r.status==='Pending').length;
+  const b=document.getElementById('pbadge');
+  if(b)b.textContent=p;
+}
+function updStats(){
+  if(!currentIdentity)return;
+  const mine=reqs.filter(r=>isMine(r,currentIdentity));
+  const p=mine.filter(r=>r.status==='Pending');
+  const a=mine.filter(r=>r.status==='Approved');
+  document.getElementById('st-tot').textContent=mine.length;
+  document.getElementById('st-pen').textContent=p.length;
+  document.getElementById('st-apr').textContent=a.length;
+  document.getElementById('st-amt').textContent='₹'+p.reduce((s,r)=>s+r.amt,0).toLocaleString('en-IN');
+}
+
+const AUTHORITY_DEFAULTS={
+  'aamir.khan@grayquest.com'           :{name:'Aamir Khan',                 pw:'Aamir@4287'},
+  'neel.savla@grayquest.com'           :{name:'Neel Savla',                 pw:'Neel@6931'},
+  'sakshee.thanekar@grayquest.com'     :{name:'Sakshee Thanekar',           pw:'Saksh@1750'},
+  'ranjeet@grayquest.com'              :{name:'Ranjeet Singh Rawat',        pw:'Ranjeet@8354'},
+  'finance.communication@grayquest.com':{name:'GQ Finance Communication',   pw:'Finance@2609'},
+  'garvit@grayquest.com'               :{name:'Garvit Mathur',              pw:'Garvit@5473'},
+  'aashi.mehta@grayquest.com'          :{name:'Aashi Mehta',                pw:'Aashi@777'}
+};
+
+let authPasswords={};
+try{ authPasswords=JSON.parse(localStorage.getItem('lc_authpw')||'{}'); }catch(e){ authPasswords={}; }
+Object.keys(AUTHORITY_DEFAULTS).forEach(email=>{
+  if(!authPasswords[email]) authPasswords[email]=AUTHORITY_DEFAULTS[email].pw;
+});
+function savePasswords(){ try{localStorage.setItem('lc_authpw',JSON.stringify(authPasswords));}catch(e){} }
+savePasswords();
+
+function populateLoginSelect(){
+  const sel=document.getElementById('login-email');
+  if(!sel||sel.options.length>1)return;
+  Object.keys(AUTHORITY_DEFAULTS).forEach(email=>{
+    const opt=document.createElement('option');
+    opt.value=email; opt.textContent=AUTHORITY_DEFAULTS[email].name;
+    sel.appendChild(opt);
+  });
+}
+
+function doPasswordLogin(){
+  const err=document.getElementById('login-err');
+  err.style.display='none';
+  const email=document.getElementById('login-email').value;
+  const pw=document.getElementById('login-pw').value;
+  if(!email){ err.textContent='Please select your name.'; err.style.display='block'; return; }
+  if(!pw){ err.textContent='Please enter your password.'; err.style.display='block'; return; }
+  if(authPasswords[email]!==pw){
+    err.textContent='Incorrect password. Please try again.';
+    err.style.display='block';
+    return;
+  }
+  currentIdentity=email;
+  document.getElementById('tab-mgr').style.display='';
+  document.getElementById('tab-dash').style.display='';
+  document.getElementById('tab-login').style.display='none';
+  document.getElementById('tab-logout').style.display='';
+  document.getElementById('logged-name').textContent='✓ '+(mgrNames[email]||AUTHORITY_DEFAULTS[email].name||email);
+  document.getElementById('logged-email').textContent=email;
+  document.getElementById('login-pw').value='';
+  const adminBadge=document.getElementById('admin-badge');
+  const adminBtn=document.getElementById('btn-admin-pw');
+  if(isAdmin(email)){
+    if(adminBadge)adminBadge.style.display='inline-block';
+    if(adminBtn)adminBtn.style.display='';
+    populateAdminPwTarget();
+  } else {
+    if(adminBadge)adminBadge.style.display='none';
+    if(adminBtn)adminBtn.style.display='none';
+  }
+  go('mgr');
+  renderReqs();
+  updStats();
+  loadRequestsFromSheet(); // pull latest requests from the Sheet (multi-user)
+
+  // If the authority arrived via an email Approve/Reject link, process it now
+  if(pendingEmailAction){
+    const pa=pendingEmailAction;
+    pendingEmailAction=null;
+    setTimeout(()=>runEmailAction(pa.act,pa.id),300);
+  }
+}
+
+function doLogout(){
+  currentIdentity='';
+  document.getElementById('tab-mgr').style.display='none';
+  document.getElementById('tab-dash').style.display='none';
+  document.getElementById('tab-logout').style.display='none';
+  document.getElementById('tab-login').style.display='';
+  go('raise');
+}
+
+function toggleChangePw(){
+  const box=document.getElementById('chpw-box');
+  if(!box)return;
+  box.style.display=(box.style.display==='none'||!box.style.display)?'block':'none';
+}
+
+function submitChangePassword(){
+  const errEl=document.getElementById('chpw-err');
+  const okEl=document.getElementById('chpw-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+  const cur=document.getElementById('chpw-current').value;
+  const nw=document.getElementById('chpw-new').value;
+  const cf=document.getElementById('chpw-confirm').value;
+  if(authPasswords[currentIdentity]!==cur){ errEl.textContent='Current password is incorrect.'; errEl.style.display='block'; return; }
+  if(nw.length<6){ errEl.textContent='New password must be at least 6 characters.'; errEl.style.display='block'; return; }
+  if(nw!==cf){ errEl.textContent='New password and confirmation do not match.'; errEl.style.display='block'; return; }
+  authPasswords[currentIdentity]=nw;
+  savePasswords();
+  okEl.textContent='Password updated successfully.';
+  okEl.style.display='block';
+  setTimeout(()=>{ document.getElementById('chpw-box').style.display='none'; },1500);
+}
+
+function populateAdminPwTarget(){
+  const sel=document.getElementById('adminpw-target');
+  if(!sel||sel.options.length)return;
+  Object.keys(AUTHORITY_DEFAULTS).forEach(email=>{
+    const opt=document.createElement('option');
+    opt.value=email; opt.textContent=AUTHORITY_DEFAULTS[email].name+' — '+email;
+    sel.appendChild(opt);
+  });
+}
+function toggleAdminPw(){
+  const box=document.getElementById('adminpw-box');
+  if(!box)return;
+  box.style.display=(box.style.display==='none'||!box.style.display)?'block':'none';
+}
+function submitAdminPasswordReset(){
+  const errEl=document.getElementById('adminpw-err');
+  const okEl=document.getElementById('adminpw-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+  const target=document.getElementById('adminpw-target').value;
+  const nw=document.getElementById('adminpw-new').value;
+  if(!target||nw.length<6){ errEl.textContent='Select authority and enter min 6 characters.'; errEl.style.display='block'; return; }
+  authPasswords[target]=nw;
+  savePasswords();
+  okEl.textContent='Password reset successfully.';
+  okEl.style.display='block';
+  setTimeout(()=>{ document.getElementById('adminpw-box').style.display='none'; },1500);
+}
+
+function go(t){
+  if((t==='mgr'||t==='dash')&&!currentIdentity){t='login';}
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('p-'+t).classList.add('active');
+  
+  if(t==='raise')document.querySelector('.tab[onclick*="raise"]').classList.add('active');
+  if(t==='login')document.getElementById('tab-login').classList.add('active');
+  if(t==='mgr'){document.getElementById('tab-mgr').classList.add('active');renderReqs();loadRequestsFromSheet(true);}
+  if(t==='dash'){document.getElementById('tab-dash').classList.add('active');populateYearFilter();renderDash();loadRequestsFromSheet(true);}
+}
+
+function filt(v){fStatus=v;renderReqs();}
+
+function renderReqs(){
+  const list=document.getElementById('rlist');
+  const mine=reqs.filter(r=>isMine(r,currentIdentity));
+  const filtered=fStatus==='all'?mine:mine.filter(r=>r.status===fStatus);
+  updStats();
+  if(!filtered.length){
+    list.innerHTML='<div class="empty"><i class="ti ti-inbox" style="font-size:36px;display:block;margin-bottom:8px"></i>No requests found.</div>';
+    return;
+  }
+  list.innerHTML=[...filtered].reverse().map(r=>`
+    <div class="card" style="border-left:3px solid ${r.status==='Pending'?'#f59e0b':r.status==='Approved'?'#22c55e':'#ef4444'}">
+      <div class="ch">
+        <div>
+          <div class="ct"><i class="ti ti-file-invoice"></i> ${r.id} &nbsp;—&nbsp; App ID: ${r.appId}</div>
+          <div class="cs">${r.date} ${r.time} · SPOC: <strong>${r.spoc}</strong></div>
+        </div>
+        <span class="badge b-${r.status.toLowerCase()}">${r.status}</span>
+      </div>
+      <div class="cmeta">
+        <div><div class="ml">NBFC</div><div class="mv">${r.nbfc}</div></div>
+        <div><div class="ml">Approval Amt</div><div class="mv amt">₹${r.amt.toLocaleString('en-IN')}</div></div>
+        <div><div class="ml">Type</div><div class="mv">${r.typ}</div></div>
+        <div><div class="ml">Department</div><div class="mv">${r.dept||'—'}</div></div>
+      </div>
+      <div class="remarks"><i class="ti ti-message"></i> ${r.rmk}</div>
+      ${r.hasAttachment?`<div style="font-size:12px;color:#007FFF;margin-top:6px;background:#e5f2ff;border:1px solid #b3d9ff;border-radius:6px;padding:6px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-file-spreadsheet"></i> Excel attached: ${r.attachmentName||'batch file'}</div>`:''}
+      ${r.status==='Rejected'&&r.rejectComment?`<div class="rejnote"><i class="ti ti-alert-circle"></i> <strong>Rejection reason:</strong> ${r.rejectComment}</div>`:''}
+      ${r.status==='Pending'?`
+        <div class="cact">
+          <button class="btn-approve" onclick="inAppApprove('${r.id}')"><i class="ti ti-check"></i> Approve</button>
+          <button class="btn-reject" onclick="inAppReject('${r.id}')"><i class="ti ti-x"></i> Reject</button>
+        </div>`:''}
+      ${r.status!=='Pending'?`<div style="text-align:right;font-size:11px;color:#aaa;padding-top:8px">Actioned: ${r.actionDate||''}</div>`:''}
+    </div>`).join('');
+}
+
+function inAppApprove(id){
+  const req=reqs.find(r=>r.id===id);
+  if(!req)return;
+  finalizeInAppAction(req,'Approved','');
+}
+
+function inAppReject(id){
+  const req=reqs.find(r=>r.id===id);
+  if(!req)return;
+  promptRejectComment(req,'inapp');
+}
+
+function promptRejectComment(req,source){
+  const modal=document.createElement('div');
+  modal.className='modal-ov';modal.id='reject-modal';
+  modal.innerHTML=`
+    <div class="modal-box" style="text-align:left">
+      <div style="font-size:16px;font-weight:700;color:#111;margin-bottom:6px">Reject Request ${req.id}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:12px">App ID ${req.appId} · ₹${req.amt.toLocaleString('en-IN')}</div>
+      <label style="font-size:11px;font-weight:600;color:#dc2626;text-transform:uppercase">Rejection Reason (mandatory)</label>
+      <textarea id="reject-comment-input" placeholder="Enter the reason for rejection..." style="width:100%;margin-top:6px;min-height:80px"></textarea>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button onclick="document.getElementById('reject-modal').remove()" style="flex:1;background:#f0f0ec;border:none;border-radius:8px;padding:9px;font-size:13px;cursor:pointer;font-weight:600">Cancel</button>
+        <button id="reject-confirm-btn" style="flex:1;background:#dc2626;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;cursor:pointer;font-weight:700">Confirm Reject</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('reject-confirm-btn').onclick=()=>{
+    const comment=document.getElementById('reject-comment-input').value.trim();
+    if(!comment){alert('Rejection reason is required.');return;}
+    document.getElementById('reject-modal').remove();
+    finalizeInAppAction(req,'Rejected',comment);
+  };
+}
+
+async function finalizeInAppAction(req,action,comment){
+  req.status=action;
+  req.actionDate=new Date().toLocaleString('en-IN');
+  if(action==='Rejected')req.rejectComment=comment;
+  save();
+  renderReqs();
+  updStats();
+  updBadge();
+
+  const toast=document.getElementById('mgr-toast');
+  if(toast){toast.className='toast';toast.style.background='#fffbeb';toast.style.color='#92680b';toast.style.border='1px solid #f3d77a';toast.style.display='block';toast.textContent=`Recording ${action.toLowerCase()} for ${req.id}…`;}
+
+  const okSheet=await syncSheetStatus(req.id,action,req.actionDate,comment);
+
+  const subject=`Loan Closure Approval – App ID ${req.appId}`;
+  const {html, plain}=buildStatusEmail(req, action, comment);
+  const toAddr=req.spoc||req.ccEmail;
+  const authEmail=req.mgEmail==='neel_aamir'?'neel.savla@grayquest.com,aamir.khan@grayquest.com':req.mgEmail;
+  const ccList=[req.ccEmail,authEmail].filter(x=>x&&x.trim()).join(',');
+  sendGmail(toAddr,ccList,subject,html,plain,null,'App ID '+req.appId);
+
+  if(toast){
+    if(okSheet){toast.style.background='#f0fdf4';toast.style.color='#15803d';toast.style.border='1px solid #bbf7d0';toast.textContent=`✓ ${req.id} ${action.toLowerCase()} — Sheet updated & email sent.`;}
+    else{toast.style.background='#fef2f2';toast.style.color='#dc2626';toast.style.border='1px solid #fecaca';toast.textContent=`${req.id} ${action.toLowerCase()} locally, but Sheet update failed. Click Refresh and try again if needed.`;}
+    setTimeout(()=>{toast.style.display='none';},6000);
+  }
+}
+
+function buildStatusEmail(req,action,comment){
+  const isApp=action==='Approved';
+  const color=isApp?'#15803d':'#dc2626';
+  const html=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
+    <div style="background:${color};color:#fff;padding:18px 24px">
+      <h2 style="margin:0;font-size:18px">Loan Closure Request ${action}</h2>
+      <p style="margin:4px 0 0;font-size:13px;opacity:0.9">${req.id} · App ID ${req.appId}</p>
+    </div>
+    <div style="padding:24px;background:#fff">
+      <p style="font-size:14px;color:#333">Request <b>${req.id}</b> has been <b>${action.toUpperCase()}</b> by <b>${mgrNames[req.mgEmail]||req.mgEmail}</b>.</p>
+      <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:6px 0;color:#888">App ID:</td><td style="font-weight:600">${req.appId}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">Amount:</td><td style="font-weight:700;color:${color}">₹${req.amt.toLocaleString('en-IN')}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">NBFC:</td><td>${req.nbfc}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">Type:</td><td>${req.typ}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">Department:</td><td>${req.dept||'—'}</td></tr>
+        ${comment?`<tr><td style="padding:6px 0;color:#dc2626;font-weight:600">Rejection Reason:</td><td style="color:#dc2626">${comment}</td></tr>`:''}
+      </table>
+    </div>
+  </div>`;
+  const plain=`Request ${req.id} has been ${action}.\nApp ID: ${req.appId}\nAmount: ₹${req.amt}\nNBFC: ${req.nbfc}\n${comment?'Reason: '+comment:''}`;
+  return {html,plain};
+}
+
+async function raise(){
+  const appId=document.getElementById('appId').value.trim();
+  const nbfc=getNbfc();
+  const amt=parseFloat(document.getElementById('amt').value);
+  const typ=getTyp();
+  const spoc=getSpoc();
+  const rmk=document.getElementById('rmk').value.trim();
+  const dept=getDept();
+  const mgEmail=document.getElementById('mgEmail').value;
+  const ccEmail=getCC();
+
+  const tokOk=document.getElementById('tok-ok');
+  const tokErr=document.getElementById('tok-err');
+  tokOk.style.display='none'; tokErr.style.display='none';
+
+  if(!appId&&!appIdFileData){ tokErr.textContent='Please enter App ID or attach an Excel.'; tokErr.style.display='block'; return; }
+  if(!nbfc){ tokErr.textContent='Please select NBFC / Lender.'; tokErr.style.display='block'; return; }
+  if(!amt||amt<=0){ tokErr.textContent='Please enter a valid Approval Amount.'; tokErr.style.display='block'; return; }
+  if(!typ){ tokErr.textContent='Please select Type.'; tokErr.style.display='block'; return; }
+  if(!spoc){ tokErr.textContent='Please enter your SPOC email.'; tokErr.style.display='block'; return; }
+  if(!rmk){ tokErr.textContent='Please enter Remarks / Reason for approval.'; tokErr.style.display='block'; return; }
+  if(!dept){ tokErr.textContent='Please select Department / Team.'; tokErr.style.display='block'; return; }
+  if(!mgEmail){ tokErr.textContent='Please select an Approval Authority.'; tokErr.style.display='block'; return; }
+
+  const sbtn=document.getElementById('sbtn');
+  sbtn.disabled=true; sbtn.textContent='Submitting...';
+
+  const d=new Date();
+  const reqId='REQ-'+Date.now().toString().slice(-6);
+  const dateStr=d.toLocaleDateString('en-GB');
+  const timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+
+  const newReq={
+    id:reqId,
+    date:dateStr,
+    time:timeStr,
+    appId:appId||(appIdFileData?'Batch ('+appIdFileData.name+')':''),
+    nbfc,
+    amt,
+    mode:'NEFT',
+    typ,
+    spoc,
+    dept,
+    rmk,
+    mgEmail,
+    ccEmail,
+    status:'Pending',
+    hasAttachment:!!appIdFileData,
+    attachmentName:appIdFileData?appIdFileData.name:'',
+    actionDate:'',
+    rejectComment:''
+  };
+
+  reqs.push(newReq);
+  save();
+
+  const sheetRow=[reqId,dateStr,timeStr,newReq.appId,nbfc,amt,'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,'Pending',appIdFileData?appIdFileData.name:'None','',''];
+  await syncSheet(sheetRow);
+
+  const subject=`Loan Closure Approval – App ID ${newReq.appId}`;
+  const siteUrl=location.origin+location.pathname;
+  const tok=actionToken(reqId, mgEmail);
+  const approveLink=`${siteUrl}?act=approve&id=${encodeURIComponent(reqId)}&t=${tok}`;
+  const rejectLink=`${siteUrl}?act=reject&id=${encodeURIComponent(reqId)}&t=${tok}`;
   const htmlBody=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
     <div style="background:#007FFF;color:#fff;padding:18px 24px">
       <h2 style="margin:0;font-size:18px">Loan Closure Approval Request</h2>
