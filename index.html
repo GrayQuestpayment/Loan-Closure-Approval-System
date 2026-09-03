@@ -526,32 +526,43 @@ async function handleEmailAction(){
 
   // No login needed — the secret token in the link proves this is the
   // correct authority's email. Verify it before doing anything.
-  await runEmailAction(act, id, getParam('t'));
+  await runEmailAction(act, id, (getParam('t')||'').trim());
 }
 
 async function runEmailAction(act, id, token){
+  id=String(id||'').trim();
   // Always pull the freshest data from the Sheet first (multi-user correctness)
   await loadRequestsFromSheet(true);
-  const req=reqs.find(r=>r.id===id);
+  let req=reqs.find(r=>String(r.id||'').trim()===id);
   if(!req){
-    showActionPopup('error',`Request ${id} not found. It may have been deleted.`);
+    // one retry in case the Sheet was still syncing
+    await new Promise(r=>setTimeout(r,1200));
+    await loadRequestsFromSheet(true);
+    req=reqs.find(r=>String(r.id||'').trim()===id);
+  }
+  if(!req){
+    showActionPopup('error',`Request ${id} not found. It may have been deleted, or the Sheet is still syncing — please open the link again in a few seconds.`);
     return;
   }
   if(req.status && req.status!=='Pending'){
     showActionPopup('info',`Request ${id} is already ${req.status.toLowerCase()}. No further action is needed.`);
     return;
   }
-  // Verify the token: it must match the token generated for THIS request's
-  // assigned authority (or the Admin). This is what restricts the action to
-  // only the correct approval authority, without requiring a login.
-  const validAuthorities=[req.mgEmail];
-  if(req.mgEmail==='neel_aamir'){ validAuthorities.push('neel.savla@grayquest.com','aamir.khan@grayquest.com'); }
-  ADMIN_EMAILS.forEach(a=>validAuthorities.push(a));
-  let ok=false;
-  for(const auth of validAuthorities){
-    if(token===actionToken(id, auth)){ ok=true; break; }
-  }
-  if(!ok){
+  // Verify using the authority email carried in the link (param 'a') plus the
+  // secret token. This proves the link came from the email we sent to that
+  // authority — without needing a login or a Sheet round-trip on the email.
+  const linkAuth=(getParam('a')||'').trim().toLowerCase();
+  const tokenValid = linkAuth && (token===actionToken(id, linkAuth));
+
+  // The authority in the link must actually be the request's assigned authority
+  // (or Admin). This stops anyone from swapping in a different email.
+  const assigned=(req.mgEmail||'').trim().toLowerCase();
+  const allowedForThisReq=[assigned];
+  if(assigned==='neel_aamir'){ allowedForThisReq.push('neel.savla@grayquest.com','aamir.khan@grayquest.com'); }
+  ADMIN_EMAILS.forEach(a=>allowedForThisReq.push(String(a).toLowerCase()));
+  const authorityAllowed = allowedForThisReq.indexOf(linkAuth)!==-1;
+
+  if(!tokenValid || !authorityAllowed){
     showActionPopup('error',`This approval link is invalid or not authorised. Only the assigned approval authority can action request ${id}.`);
     return;
   }
@@ -592,7 +603,7 @@ function isGASConfigured(){ return GAS_URL && GAS_URL.startsWith('https://script
 // authority (whoever holds that email) can act. Admin's token also works.
 const ACTION_SECRET='GQ-LoanClosure-2026-Secret-Key';
 function actionToken(reqId, authEmail){
-  const s=(reqId+'|'+(authEmail||'').toLowerCase()+'|'+ACTION_SECRET);
+  const s=(String(reqId).trim()+'|'+String(authEmail||'').trim().toLowerCase()+'|'+ACTION_SECRET);
   let h=0;
   for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
   // second pass for a longer, less guessable token
@@ -983,8 +994,9 @@ async function raise(){
   const subject=`Loan Closure Approval – App ID ${newReq.appId}`;
   const siteUrl=location.origin+location.pathname;
   const tok=actionToken(reqId, mgEmail);
-  const approveLink=`${siteUrl}?act=approve&id=${encodeURIComponent(reqId)}&t=${tok}`;
-  const rejectLink=`${siteUrl}?act=reject&id=${encodeURIComponent(reqId)}&t=${tok}`;
+  const authParam=encodeURIComponent(mgEmail);
+  const approveLink=`${siteUrl}?act=approve&id=${encodeURIComponent(reqId)}&a=${authParam}&t=${tok}`;
+  const rejectLink=`${siteUrl}?act=reject&id=${encodeURIComponent(reqId)}&a=${authParam}&t=${tok}`;
   const htmlBody=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
     <div style="background:#007FFF;color:#fff;padding:18px 24px">
       <h2 style="margin:0;font-size:18px">Loan Closure Approval Request</h2>
