@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<!-- saved from url=(0064)https://grayquestpayment.github.io/Loan-Closure-Approval-System/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Loan Closure Approval System</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link href="./Loan Closure Approval System_files/css2" rel="stylesheet">
+<link rel="stylesheet" href="./Loan Closure Approval System_files/tabler-icons.min.css">
 
 <style>
 :root{--brand:#007FFF;--brand-dark:#0066cc;--brand-light:#e5f2ff}
@@ -77,7 +77,7 @@ textarea{resize:vertical;min-height:90px}
 <body>
 <div class="app">
   <div class="hdr" style="display:flex;align-items:center;gap:14px">
-    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><circle cx='24' cy='24' r='24' fill='%23007FFF'/><text x='50%25' y='55%25' font-size='20' font-weight='bold' fill='white' dominant-baseline='middle' text-anchor='middle' font-family='Arial'>GQ</text></svg>" alt="GrayQuest" id="gq-logo-header" style="width:48px;height:48px;border-radius:50%;flex-shrink:0"/>
+    <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;48&#39; height=&#39;48&#39; viewBox=&#39;0 0 48 48&#39;&gt;&lt;circle cx=&#39;24&#39; cy=&#39;24&#39; r=&#39;24&#39; fill=&#39;%23007FFF&#39;/&gt;&lt;text x=&#39;50%25&#39; y=&#39;55%25&#39; font-size=&#39;20&#39; font-weight=&#39;bold&#39; fill=&#39;white&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; font-family=&#39;Arial&#39;&gt;GQ&lt;/text&gt;&lt;/svg&gt;" alt="GrayQuest" id="gq-logo-header" style="width:48px;height:48px;border-radius:50%;flex-shrink:0">
     <div>
       <h1><i class="ti ti-file-check" style="vertical-align:-3px;margin-right:6px"></i>Loan Closure Approval System</h1>
       <p>Parent Support · Auto-sync to &nbsp;<a href="https://docs.google.com/spreadsheets/d/1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo/edit" target="_blank" style="color:#007FFF;text-decoration:none;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> &nbsp;·&nbsp; <span onclick="showSetupModal()" style="color:#f59e0b;cursor:pointer;font-weight:600;font-size:12px">⚙️ Email Setup</span></p>
@@ -85,10 +85,10 @@ textarea{resize:vertical;min-height:90px}
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="go('raise')"><i class="ti ti-file-plus"></i> Raise Request</button>
-    <button class="tab" id="tab-mgr" onclick="go('mgr')" style="display:none"><i class="ti ti-shield-check"></i> Approval Authority <span id="pbadge" style="background:#fef9c3;color:#a16207;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;font-weight:600">0</span></button>
-    <button class="tab" id="tab-dash" onclick="go('dash')" style="display:none"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
-    <button class="tab" id="tab-login" onclick="go('login')" style="margin-left:auto;color:#007FFF"><i class="ti ti-lock"></i> Authority Login</button>
+    <button class="tab active" onclick="go(&#39;raise&#39;)"><i class="ti ti-file-plus"></i> Raise Request</button>
+    <button class="tab" id="tab-mgr" onclick="go(&#39;mgr&#39;)" style="display:none"><i class="ti ti-shield-check"></i> Approval Authority <span id="pbadge" style="background:#fef9c3;color:#a16207;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;font-weight:600">12</span></button>
+    <button class="tab" id="tab-dash" onclick="go(&#39;dash&#39;)" style="display:none"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
+    <button class="tab" id="tab-login" onclick="go(&#39;login&#39;)" style="margin-left:auto;color:#007FFF"><i class="ti ti-lock"></i> Authority Login</button>
     <button class="tab" id="tab-logout" onclick="doLogout()" style="display:none;margin-left:auto;color:#dc2626"><i class="ti ti-logout"></i> Logout</button>
   </div>
 
@@ -99,10 +99,10 @@ textarea{resize:vertical;min-height:90px}
     <div class="sheet-note"><i class="ti ti-table"></i> On submit, this entry will be appended to your <a href="https://docs.google.com/spreadsheets/d/1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo/edit" target="_blank" style="color:#007FFF;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> and a notification email will be sent via Gmail.</div>
     <div class="form-grid">
       <div class="fg"><label>App ID / Loan ID</label>
-        <input type="text" id="appId" placeholder="Single ID e.g. 1549692, or attach Excel below"/>
+        <input type="text" id="appId" placeholder="Single ID e.g. 1549692, or attach Excel below">
         <div style="margin-top:6px">
           <label for="appIdFile" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#007FFF;cursor:pointer;text-transform:none;letter-spacing:0"><i class="ti ti-paperclip"></i> Attach Excel (many App IDs)</label>
-          <input type="file" id="appIdFile" accept=".xlsx,.xls,.csv" onchange="handleAppIdFile(this)" style="display:none"/>
+          <input type="file" id="appIdFile" accept=".xlsx,.xls,.csv" onchange="handleAppIdFile(this)" style="display:none">
           <div id="appIdFileInfo" style="display:none;align-items:center;gap:8px;margin-top:6px;background:#e5f2ff;border:1px solid #b3d9ff;border-radius:6px;padding:6px 10px;font-size:12px;color:#007FFF">
             <i class="ti ti-file-spreadsheet"></i>
             <span id="appIdFileName" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
@@ -134,9 +134,9 @@ textarea{resize:vertical;min-height:90px}
           <option>Refund to Parent / Institute</option>
           <option value="other">Other</option>
         </select>
-        <input type="text" id="nbfcOther" placeholder="Enter NBFC / Lender name (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb"/>
+        <input type="text" id="nbfcOther" placeholder="Enter NBFC / Lender name (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb">
       </div>
-      <div class="fg"><label>Approval Amount (₹)</label><input type="number" id="amt" placeholder="e.g. 500" oninput="upd()"/></div>
+      <div class="fg"><label>Approval Amount (₹)</label><input type="number" id="amt" placeholder="e.g. 500" oninput="upd()"></div>
       <div class="fg"><label>Type</label>
         <select id="typ" onchange="handleTypChange(this.value)">
           <option value="">Select type</option>
@@ -160,10 +160,10 @@ textarea{resize:vertical;min-height:90px}
           <option>Retention Waiver</option>
           <option value="other">Other</option>
         </select>
-        <input type="text" id="typOther" placeholder="Enter type (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb"/>
+        <input type="text" id="typOther" placeholder="Enter type (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb">
       </div>
       <div class="fg"><label>SPOC Email (Your Email)</label>
-        <input type="email" id="spoc" placeholder="Enter your email (e.g. yourname@grayquest.com)"/>
+        <input type="email" id="spoc" placeholder="Enter your email (e.g. yourname@grayquest.com)">
       </div>
       <div class="fg full"><label>Remarks / Reason for Approval</label>
         <textarea id="rmk" placeholder="Explain why manager approval is needed for this amount..."></textarea>
@@ -182,10 +182,10 @@ textarea{resize:vertical;min-height:90px}
           <option>SALES</option>
           <option value="other">Other</option>
         </select>
-        <input type="text" id="deptOther" placeholder="Enter Department / Team name (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb"/>
+        <input type="text" id="deptOther" placeholder="Enter Department / Team name (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb">
       </div>
       <div class="fg"><label>Approval Authority <span style="text-transform:none;letter-spacing:0;color:#007FFF;font-weight:600">🔒 auto-set by Department</span></label>
-        <select id="mgEmail" disabled style="background:#f0f0ec;color:#555;cursor:not-allowed">
+        <select id="mgEmail" disabled="" style="background:#f0f0ec;color:#555;cursor:not-allowed">
           <option value="">Select recipient</option>
           <option value="aamir.khan@grayquest.com">Aamir Khan — aamir.khan@grayquest.com</option>
           <option value="neel.savla@grayquest.com">Neel Savla — neel.savla@grayquest.com</option>
@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:90px}
           <option value="gqsupport@grayquest.com">GQ Support — gqsupport@grayquest.com</option>
           <option value="other">Other (enter manually)</option>
         </select>
-        <input type="text" id="ccEmail" placeholder="Enter email addresses, comma separated" style="margin-top:6px;display:none"/>
+        <input type="text" id="ccEmail" placeholder="Enter email addresses, comma separated" style="margin-top:6px;display:none">
       </div>
     </div>
 
@@ -236,10 +236,10 @@ textarea{resize:vertical;min-height:90px}
         <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Your Name</label>
         <select id="login-email" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box">
           <option value="">Select your name</option>
-        </select>
+        <option value="aamir.khan@grayquest.com">Aamir Khan</option><option value="neel.savla@grayquest.com">Neel Savla</option><option value="sakshee.thanekar@grayquest.com">Sakshee Thanekar</option><option value="ranjeet@grayquest.com">Ranjeet Singh Rawat</option><option value="finance.communication@grayquest.com">GQ Finance Communication</option><option value="garvit@grayquest.com">Garvit Mathur</option><option value="aashi.mehta@grayquest.com">Aashi Mehta</option></select>
 
         <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Password</label>
-        <input id="login-pw" type="password" placeholder="Enter your password" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;box-sizing:border-box" onkeydown="if(event.key==='Enter')doPasswordLogin()"/>
+        <input id="login-pw" type="password" placeholder="Enter your password" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;box-sizing:border-box" onkeydown="if(event.key===&#39;Enter&#39;)doPasswordLogin()">
 
         <button onclick="doPasswordLogin()" style="width:100%;background:#007FFF;color:#fff;border:none;border-radius:999px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Log In</button>
       </div>
@@ -265,9 +265,9 @@ textarea{resize:vertical;min-height:90px}
           </div>
         </div>
         <div style="display:flex;gap:8px">
-          <button id="btn-admin-pw" onclick="toggleAdminPw()" style="display:none;background:none;border:1px solid #93c5fd;border-radius:7px;padding:5px 12px;font-size:12px;color:#007FFF;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600"><i class="ti ti-lock-cog"></i> Manage Passwords</button>
-          <button onclick="toggleChangePw()" style="background:none;border:1px solid #86efac;border-radius:7px;padding:5px 12px;font-size:12px;color:#15803d;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600"><i class="ti ti-key"></i> Change Password</button>
-          <button onclick="doLogout()" style="background:none;border:1px solid #86efac;border-radius:7px;padding:5px 12px;font-size:12px;color:#15803d;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600"><i class="ti ti-logout"></i> Logout</button>
+          <button id="btn-admin-pw" onclick="toggleAdminPw()" style="display:none;background:none;border:1px solid #93c5fd;border-radius:7px;padding:5px 12px;font-size:12px;color:#007FFF;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600"><i class="ti ti-lock-cog"></i> Manage Passwords</button>
+          <button onclick="toggleChangePw()" style="background:none;border:1px solid #86efac;border-radius:7px;padding:5px 12px;font-size:12px;color:#15803d;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600"><i class="ti ti-key"></i> Change Password</button>
+          <button onclick="doLogout()" style="background:none;border:1px solid #86efac;border-radius:7px;padding:5px 12px;font-size:12px;color:#15803d;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600"><i class="ti ti-logout"></i> Logout</button>
         </div>
       </div>
 
@@ -276,10 +276,10 @@ textarea{resize:vertical;min-height:90px}
         <div id="adminpw-err" class="toast td" style="text-align:left"></div>
         <div id="adminpw-ok" class="toast ts" style="text-align:left"></div>
         <select id="adminpw-target" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:8px"></select>
-        <input id="adminpw-new" type="password" placeholder="New password (min 6 characters)" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:10px;box-sizing:border-box"/>
+        <input id="adminpw-new" type="password" placeholder="New password (min 6 characters)" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:10px;box-sizing:border-box">
         <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button onclick="toggleAdminPw()" style="background:#f0f0ec;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Cancel</button>
-          <button onclick="submitAdminPasswordReset()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Reset Password</button>
+          <button onclick="toggleAdminPw()" style="background:#f0f0ec;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600">Cancel</button>
+          <button onclick="submitAdminPasswordReset()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600">Reset Password</button>
         </div>
       </div>
 
@@ -287,12 +287,12 @@ textarea{resize:vertical;min-height:90px}
         <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:10px">Change Password</div>
         <div id="chpw-err" class="toast td" style="text-align:left"></div>
         <div id="chpw-ok" class="toast ts" style="text-align:left"></div>
-        <input id="chpw-current" type="password" placeholder="Current password" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:8px;box-sizing:border-box"/>
-        <input id="chpw-new" type="password" placeholder="New password (min 6 characters)" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:8px;box-sizing:border-box"/>
-        <input id="chpw-confirm" type="password" placeholder="Confirm new password" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:10px;box-sizing:border-box"/>
+        <input id="chpw-current" type="password" placeholder="Current password" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:8px;box-sizing:border-box">
+        <input id="chpw-new" type="password" placeholder="New password (min 6 characters)" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:8px;box-sizing:border-box">
+        <input id="chpw-confirm" type="password" placeholder="Confirm new password" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:10px;box-sizing:border-box">
         <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button onclick="toggleChangePw()" style="background:#f0f0ec;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Cancel</button>
-          <button onclick="submitChangePassword()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Update Password</button>
+          <button onclick="toggleChangePw()" style="background:#f0f0ec;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600">Cancel</button>
+          <button onclick="submitChangePassword()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600">Update Password</button>
         </div>
       </div>
 
@@ -309,12 +309,12 @@ textarea{resize:vertical;min-height:90px}
           <select onchange="filt(this.value)"><option value="all">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <span id="sync-status" style="font-size:12px;color:#aaa"></span>
-          <button onclick="loadRequestsFromSheet()" style="background:#007FFF;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
+          <span id="sync-status" style="font-size: 12px; color: rgb(21, 128, 61);">Synced ✓</span>
+          <button onclick="loadRequestsFromSheet()" style="background:#007FFF;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
         </div>
       </div>
       <div id="mgr-toast" class="toast"></div>
-      <div id="rlist"><div class="empty"><i class="ti ti-inbox" style="font-size:36px;display:block;margin-bottom:8px"></i>No requests assigned to you yet.</div></div>
+      <div id="rlist"><div class="empty"><i class="ti ti-inbox" style="font-size:36px;display:block;margin-bottom:8px"></i>No requests found.</div></div>
     </div>
   </div>
 
@@ -327,7 +327,7 @@ textarea{resize:vertical;min-height:90px}
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <select id="dash-year" onchange="renderDash()" style="font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:7px;background:#fafaf8"></select>
-        <button onclick="renderDash()" style="background:#111;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
+        <button onclick="renderDash()" style="background:#111;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:500;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
       </div>
     </div>
 
@@ -380,7 +380,7 @@ textarea{resize:vertical;min-height:90px}
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="./Loan Closure Approval System_files/chart.umd.min.js.download"></script>
 
 <script>
 const SHEET_ID='1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo';
@@ -563,7 +563,17 @@ async function runEmailAction(act, id, token){
   const authorityAllowed = allowedForThisReq.indexOf(linkAuth)!==-1;
 
   if(!tokenValid || !authorityAllowed){
-    showActionPopup('error',`This approval link is invalid or not authorised. Only the assigned approval authority can action request ${id}.`);
+    const reason = !linkAuth ? 'No authority in link (old email — please raise a NEW request).'
+                 : !tokenValid ? 'Token mismatch (old email or link altered — raise a NEW request).'
+                 : 'Authority in link is not the assigned approver for this request.';
+    const diag=`<div style="text-align:left;font-size:11px;color:#888;margin-top:10px;background:#f8f8f8;border-radius:6px;padding:8px;word-break:break-all">
+      <b>Why:</b> ${reason}<br><br>
+      link&nbsp;auth&nbsp;(a): ${linkAuth||'(missing)'}<br>
+      assigned&nbsp;(sheet): ${assigned||'(missing)'}<br>
+      token&nbsp;valid: ${tokenValid}<br>
+      authority&nbsp;allowed: ${authorityAllowed}
+    </div>`;
+    showActionPopup('error',`This approval link is invalid or not authorised for request ${id}.${diag}`);
     return;
   }
 
@@ -1180,5 +1190,10 @@ function renderDash(){
     </div>`).join('');
 }
 </script>
-</body>
-</html>
+
+
+<div class="modal-ov"><div class="modal-box" style="text-align:center">
+    <div style="width:60px;height:60px;line-height:60px;border-radius:50%;background:#fef2f2;color:#dc2626;font-size:30px;font-weight:800;margin:0 auto 14px">✕</div>
+    <div style="font-size:15px;color:#333;line-height:1.5;margin-bottom:18px">This approval link is invalid or not authorised. Only the assigned approval authority can action request REQ-334445.</div>
+    <button onclick="this.closest(&#39;.modal-ov&#39;).remove()" style="background:#111;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:14px;font-weight:600;cursor:pointer">Close</button>
+  </div></div></body></html>
