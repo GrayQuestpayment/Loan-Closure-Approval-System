@@ -3,6 +3,7 @@
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="2026.09.27-professional-v2-admin-ui">
 <title>Loan Closure Approval System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link href="./Loan Closure Approval System_files/css2" rel="stylesheet">
@@ -72,6 +73,81 @@ textarea{resize:vertical;min-height:90px}
 .modal-ov{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px}
 .modal-box{background:#fff;border-radius:20px;padding:1.75rem;max-width:440px;width:100%}
 @media(max-width:600px){.form-grid,.cmeta,.stats{grid-template-columns:1fr 1fr}.fg.full{grid-column:1/-1}}
+
+/* ===== Professional approval workflow enhancements ===== */
+:root{--success:#15803d;--danger:#dc2626;--warning:#a16207;--muted:#737373;--surface:#fafafa}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid #e7e7e7;border-radius:12px;padding:14px 16px}
+.kpi .klabel{font-size:11px;font-weight:700;color:#999;letter-spacing:.05em;text-transform:uppercase}
+.kpi .kvalue{font-size:24px;font-weight:750;color:#111;margin-top:4px}
+.kpi .ksub{font-size:11px;color:#999;margin-top:2px}
+.dashboard-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#fafafa;border:1px solid #e8e8e8;border-radius:10px;padding:10px;margin-bottom:14px}
+.dashboard-tools input,.dashboard-tools select{width:auto;min-width:130px;font-size:12px;padding:7px 9px;background:#fff}
+.btn-secondary{background:#fff;border:1px solid #d9d9d9;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:650;cursor:pointer;font-family:inherit}
+.btn-secondary:hover{border-color:#007FFF;color:#007FFF}
+.btn-export{background:#111;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:650;cursor:pointer;font-family:inherit}
+.btn-export:hover{opacity:.88}
+.age-pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:700}
+.age-fresh{background:#f0fdf4;color:#15803d}
+.age-warn{background:#fffbeb;color:#a16207}
+.age-old{background:#fef2f2;color:#dc2626}
+.action-lock{opacity:.55;pointer-events:none}
+.status-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:#777;margin-top:8px}
+.authority-chip{display:inline-flex;align-items:center;gap:5px;background:#f0f7ff;color:#1264a3;border:1px solid #cfe6ff;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:700}
+.audit-note{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 11px;font-size:11px;color:#64748b;margin-top:10px}
+.security-banner{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:9px;padding:9px 12px;font-size:11px;margin-bottom:12px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.chart-card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem}
+.chart-title{font-size:12px;font-weight:700;color:#111;margin-bottom:2px}
+.chart-sub{font-size:11px;color:#aaa;margin-bottom:12px}
+@media(max-width:900px){.kpi-grid{grid-template-columns:1fr 1fr}.chart-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.kpi-grid{grid-template-columns:1fr 1fr}.dashboard-tools input,.dashboard-tools select{min-width:100px}.chart-grid{grid-template-columns:1fr}}
+
+/* ===== Executive / Professional UI Theme ===== */
+:root{
+  --brand:#1d4ed8;
+  --brand-dark:#1e40af;
+  --brand-light:#eff6ff;
+  --navy:#0f172a;
+  --slate:#475569;
+  --surface:#ffffff;
+  --page:#f4f7fb;
+  --line:#e2e8f0;
+  --teal:#0f766e;
+}
+body{background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);color:var(--navy)}
+.app{max-width:1240px;padding:24px 28px}
+.hdr{margin-bottom:20px!important;padding:18px 20px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.96);box-shadow:0 8px 30px rgba(15,23,42,.06)}
+.hdr h1{font-size:27px;color:var(--navy);letter-spacing:-.035em}
+.hdr p{color:#64748b;font-size:13px;margin-top:5px}
+.hdr a{color:#1d4ed8!important}
+.tabs{background:#fff;border:1px solid var(--line);border-radius:12px 12px 0 0;padding:0 6px}
+.tab{color:#64748b;padding:13px 20px}
+.tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+.tab:hover{color:var(--brand-dark)}
+.panel{border-color:var(--line);box-shadow:0 8px 28px rgba(15,23,42,.035)}
+.sheet-note{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+.btn-submit{background:#1d4ed8;box-shadow:0 4px 12px rgba(29,78,216,.18)}
+.btn-submit:hover{background:#1e40af}
+.btn-approve{background:#ecfdf5;border-color:#86efac;color:#047857}
+.btn-reject{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.card{border-color:#e2e8f0;box-shadow:0 2px 10px rgba(15,23,42,.025)}
+.card:hover{border-color:#93c5fd;box-shadow:0 6px 18px rgba(15,23,42,.06)}
+.sc,.kpi{background:#fff;border-color:#e2e8f0;box-shadow:0 2px 10px rgba(15,23,42,.025)}
+.kpi .kvalue,.sv{color:var(--navy)}
+.dashboard-tools{background:#f8fafc;border-color:#e2e8f0}
+.btn-secondary:hover{border-color:#93c5fd;color:#1d4ed8}
+.btn-export{background:#0f172a}
+.chart-card{border-color:#e2e8f0;box-shadow:0 2px 10px rgba(15,23,42,.025)}
+.authority-chip{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+.security-banner{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.abox{background:#fffbeb;border-color:#fde68a}
+input,select,textarea{border-color:#dbe3ee;background:#f8fafc}
+input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,.12)}
+#email-setup-link{display:none!important}
+.admin-only{display:none!important}
+.admin-only.admin-visible{display:inline-flex!important}
+
 </style>
 </head>
 <body>
@@ -80,7 +156,7 @@ textarea{resize:vertical;min-height:90px}
     <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;48&#39; height=&#39;48&#39; viewBox=&#39;0 0 48 48&#39;&gt;&lt;circle cx=&#39;24&#39; cy=&#39;24&#39; r=&#39;24&#39; fill=&#39;%23007FFF&#39;/&gt;&lt;text x=&#39;50%25&#39; y=&#39;55%25&#39; font-size=&#39;20&#39; font-weight=&#39;bold&#39; fill=&#39;white&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; font-family=&#39;Arial&#39;&gt;GQ&lt;/text&gt;&lt;/svg&gt;" alt="GrayQuest" id="gq-logo-header" style="width:48px;height:48px;border-radius:50%;flex-shrink:0">
     <div>
       <h1><i class="ti ti-file-check" style="vertical-align:-3px;margin-right:6px"></i>Loan Closure Approval System</h1>
-      <p>Parent Support · Auto-sync to &nbsp;<a href="https://docs.google.com/spreadsheets/d/1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo/edit" target="_blank" style="color:#007FFF;text-decoration:none;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> &nbsp;·&nbsp; <span onclick="showSetupModal()" style="color:#f59e0b;cursor:pointer;font-weight:600;font-size:12px">⚙️ Email Setup</span></p>
+      <p>Parent Support · Auto-sync to &nbsp;<a href="https://docs.google.com/spreadsheets/d/1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo/edit" target="_blank" style="color:#007FFF;text-decoration:none;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> &nbsp;·&nbsp; <span id="email-setup-link" class="admin-only" onclick="showSetupModal()" style="color:#b45309;cursor:pointer;font-weight:700;font-size:12px;align-items:center;gap:4px">⚙️ Email Setup</span></p>
     </div>
   </div>
 
@@ -321,67 +397,65 @@ textarea{resize:vertical;min-height:90px}
 
   <!-- DASHBOARD (Protected) -->
   <div id="p-dash" class="panel">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
       <div>
         <div style="font-size:16px;font-weight:700;color:#111">All Approvals Dashboard</div>
-        <div style="font-size:12px;color:#888;margin-top:2px">Live overview · monthly trends · all approval authorities</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">Live overview · approvals · pending ageing · authority workload</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span id="dash-sync" class="syncrow"><span class="sdot sok"></span>Ready</span>
         <select id="dash-year" onchange="renderDash()" style="font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:7px;background:#fafaf8"></select>
-        <button onclick="renderDash()" style="background:#111;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:500;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
+        <button onclick="refreshDashboard()" class="btn-secondary"><i class="ti ti-refresh"></i> Refresh</button>
+        <button onclick="exportDashboardCSV()" class="btn-export"><i class="ti ti-download"></i> Export CSV</button>
       </div>
     </div>
 
-    <div class="stats" style="margin-bottom:1.5rem">
-      <div class="sc"><div class="sl">Total Requests</div><div class="sv" id="d-total">0</div></div>
-      <div class="sc"><div class="sl">Pending</div><div class="sv warn" id="d-pending">0</div></div>
-      <div class="sc"><div class="sl">Approved</div><div class="sv ok" id="d-approved">0</div></div>
-      <div class="sc"><div class="sl">Total Approved Amt</div><div class="sv ok" id="d-amt">₹0</div></div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
-        <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:2px">Monthly Requests</div>
-        <div style="font-size:11px;color:#aaa;margin-bottom:12px">Approved · Pending · Rejected per month</div>
-        <div style="position:relative;height:200px"><canvas id="chart-monthly"></canvas></div>
-      </div>
-      <div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
-        <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:2px">Monthly Approval Amount (₹)</div>
-        <div style="font-size:11px;color:#aaa;margin-bottom:12px">Total amount approved each month</div>
-        <div style="position:relative;height:200px"><canvas id="chart-amount"></canvas></div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem">
-      <div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
-        <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:2px">Status Breakdown</div>
-        <div style="font-size:11px;color:#aaa;margin-bottom:12px">Distribution of all requests</div>
-        <div style="position:relative;height:200px"><canvas id="chart-status"></canvas></div>
-      </div>
-      <div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
-        <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:2px">Requests by Authority</div>
-        <div style="font-size:11px;color:#aaa;margin-bottom:12px">Total assigned to each approver</div>
-        <div style="position:relative;height:200px"><canvas id="chart-authority"></canvas></div>
-      </div>
-    </div>
-
-    <div style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Pending by Authority</div>
-    <div id="d-authority-breakdown" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:1.5rem"></div>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-      <div style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.06em;text-transform:uppercase">Requests</div>
-      <select onchange="dashFilter(this.value)" style="font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:7px;background:#fafaf8">
-        <option value="Pending">Pending Only</option>
-        <option value="all">All Requests</option>
+    <div class="dashboard-tools">
+      <span style="font-size:11px;font-weight:700;color:#888">SEARCH</span>
+      <input id="dash-search" type="search" placeholder="Request ID, App ID, SPOC..." oninput="renderDash()">
+      <select id="dash-status" onchange="renderDash()">
+        <option value="all">All Statuses</option>
+        <option value="Pending" selected>Pending</option>
         <option value="Approved">Approved</option>
         <option value="Rejected">Rejected</option>
       </select>
+      <select id="dash-dept" onchange="renderDash()"><option value="all">All Departments</option></select>
+      <select id="dash-authority" onchange="renderDash()"><option value="all">All Authorities</option></select>
+      <button onclick="clearDashboardFilters()" class="btn-secondary">Clear</button>
+    </div>
+
+    <div class="security-banner">
+      <i class="ti ti-shield-check"></i>
+      <strong>Approval rule:</strong> a request can be actioned only while its status is <b>Pending</b>. After approval or rejection, the opposite action is blocked.
+      NACH requests are assigned to <b>Imran Abdul</b> only.
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="klabel">Total Requests</div><div class="kvalue" id="d-total">0</div><div class="ksub">Selected filters</div></div>
+      <div class="kpi"><div class="klabel">Pending</div><div class="kvalue" id="d-pending" style="color:#a16207">0</div><div class="ksub" id="d-pending-sub">₹0 pending amount</div></div>
+      <div class="kpi"><div class="klabel">Approved</div><div class="kvalue" id="d-approved" style="color:#15803d">0</div><div class="ksub" id="d-approved-sub">₹0 approved amount</div></div>
+      <div class="kpi"><div class="klabel">Rejected</div><div class="kvalue" id="d-rejected" style="color:#dc2626">0</div><div class="ksub" id="d-rejected-sub">Approval completion</div></div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">Monthly Requests</div><div class="chart-sub">Approved · Pending · Rejected</div><div style="position:relative;height:220px"><canvas id="chart-monthly"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Monthly Approval Amount</div><div class="chart-sub">Approved amount per month</div><div style="position:relative;height:220px"><canvas id="chart-amount"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Status Breakdown</div><div class="chart-sub">Current request distribution</div><div style="position:relative;height:220px"><canvas id="chart-status"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Requests by Authority</div><div class="chart-sub">Assigned workload</div><div style="position:relative;height:220px"><canvas id="chart-authority"></canvas></div></div>
+      <div class="chart-card" style="grid-column:1/-1"><div class="chart-title">Requests by Department</div><div class="chart-sub">Department workload for the selected year</div><div style="position:relative;height:220px"><canvas id="chart-department"></canvas></div></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Pending by Authority</div>
+    <div id="d-authority-breakdown" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:1.5rem"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.06em;text-transform:uppercase">Requests</div>
+      <span id="d-result-count" style="font-size:11px;color:#999"></span>
     </div>
     <div id="d-list"><div class="empty"><i class="ti ti-chart-bar" style="font-size:36px;display:block;margin-bottom:8px"></i>No requests yet.</div></div>
   </div>
 </div>
 
-<script src="./Loan Closure Approval System_files/chart.umd.min.js.download"></script>
 
 <script>
 const SHEET_ID='1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo';
@@ -507,10 +581,18 @@ function getCC(){
 try{const r=localStorage.getItem('lc_reqs');if(r)reqs=JSON.parse(r);}catch(e){}
 try{const m=localStorage.getItem('lc_mails');if(m)mails=JSON.parse(m);}catch(e){}
 
+function updateAdminUI(){
+  const setup=document.getElementById('email-setup-link');
+  if(!setup)return;
+  if(isAdmin(currentIdentity)) setup.classList.add('admin-visible');
+  else setup.classList.remove('admin-visible');
+}
+
 window.addEventListener('load',()=>{
   populateLoginSelect();
   updStats();
   updBadge();
+  updateAdminUI();
   handleEmailAction();
 });
 
@@ -552,7 +634,8 @@ async function runEmailAction(act, id, token, linkAuth){
     return;
   }
   if(req.status && req.status!=='Pending'){
-    showActionPopup('info',`Request ${id} is already ${req.status.toLowerCase()}. No further action is needed.`);
+    const who=mgrNames[req.mgEmail]||req.mgEmail||'the assigned authority';
+    showActionPopup('info',`Request ${id} is already ${String(req.status).toUpperCase()} by ${escapeHtml(who)}. The opposite action is blocked.`);
     return;
   }
   // Verify using the authority email carried in the link (param 'a') plus the
@@ -565,6 +648,11 @@ async function runEmailAction(act, id, token, linkAuth){
   // The authority in the link must actually be the request's assigned authority
   // (or Admin). This stops anyone from swapping in a different email.
   const assigned=(req.mgEmail||'').trim().toLowerCase();
+  // Department authority rule: NACH must always be Imran Abdul.
+  if(String(req.dept||'').trim().toLowerCase()==='nach' && assigned!=='imran.abdul@grayquest.com'){
+    showActionPopup('error',`Security check failed: NACH requests must be assigned to Imran Abdul. Request ${id} was not actioned.`);
+    return;
+  }
   const allowedForThisReq=[assigned];
   if(assigned==='neel_aamir'){ allowedForThisReq.push('neel.savla@grayquest.com','aamir.khan@grayquest.com'); }
   ADMIN_EMAILS.forEach(a=>allowedForThisReq.push(String(a).toLowerCase()));
@@ -656,6 +744,10 @@ async function loadRequestsFromSheet(silent){
       renderReqs();
       updStats();
       updBadge();
+      if(document.getElementById('p-dash')?.classList.contains('active')){
+        populateDashboardFilters();
+        renderDash();
+      }
       const dash=document.getElementById('p-dash');
       if(dash && dash.classList.contains('active')) renderDash();
       isLoadingReqs=false;
@@ -735,6 +827,7 @@ function doPasswordLogin(){
   document.getElementById('login-pw').value='';
   const adminBadge=document.getElementById('admin-badge');
   const adminBtn=document.getElementById('btn-admin-pw');
+  updateAdminUI();
   if(isAdmin(email)){
     if(adminBadge)adminBadge.style.display='inline-block';
     if(adminBtn)adminBtn.style.display='';
@@ -758,6 +851,7 @@ function doPasswordLogin(){
 
 function doLogout(){
   currentIdentity='';
+  updateAdminUI();
   document.getElementById('tab-mgr').style.display='none';
   document.getElementById('tab-dash').style.display='none';
   document.getElementById('tab-logout').style.display='none';
@@ -869,12 +963,28 @@ function renderReqs(){
 function inAppApprove(id){
   const req=reqs.find(r=>r.id===id);
   if(!req)return;
+  if(req.status!=='Pending'){
+    showActionPopup('info',`Request ${req.id} is already ${String(req.status).toLowerCase()}. No further action is allowed.`);
+    return;
+  }
+  if(!isAdmin(currentIdentity) && String(req.mgEmail||'').toLowerCase()!==String(currentIdentity||'').toLowerCase()){
+    showActionPopup('error','You are not the assigned approval authority for this request.');
+    return;
+  }
   finalizeInAppAction(req,'Approved','');
 }
 
 function inAppReject(id){
   const req=reqs.find(r=>r.id===id);
   if(!req)return;
+  if(req.status!=='Pending'){
+    showActionPopup('info',`Request ${req.id} is already ${String(req.status).toLowerCase()}. No further action is allowed.`);
+    return;
+  }
+  if(!isAdmin(currentIdentity) && String(req.mgEmail||'').toLowerCase()!==String(currentIdentity||'').toLowerCase()){
+    showActionPopup('error','You are not the assigned approval authority for this request.');
+    return;
+  }
   promptRejectComment(req,'inapp');
 }
 
@@ -902,6 +1012,14 @@ function promptRejectComment(req,source){
 }
 
 async function finalizeInAppAction(req,action,comment){
+  const key=String(req.id||'')+'|'+action;
+  if(processingActions.has(key))return;
+  if(req.status && req.status!=='Pending'){
+    showActionPopup('info',`Request ${req.id} is already ${String(req.status).toLowerCase()}. No further action is allowed.`);
+    return;
+  }
+  processingActions.add(key);
+  const originalStatus=req.status;
   req.status=action;
   req.actionDate=new Date().toLocaleString('en-IN');
   if(action==='Rejected')req.rejectComment=comment;
@@ -922,9 +1040,17 @@ async function finalizeInAppAction(req,action,comment){
   const ccList=[req.ccEmail,authEmail].filter(x=>x&&x.trim()).join(',');
   sendGmail(toAddr,ccList,subject,html,plain,null,'App ID '+req.appId);
 
+  processingActions.delete(key);
   if(toast){
     if(okSheet){toast.style.background='#f0fdf4';toast.style.color='#15803d';toast.style.border='1px solid #bbf7d0';toast.textContent=`✓ ${req.id} ${action.toLowerCase()} — Sheet updated & email sent.`;}
-    else{toast.style.background='#fef2f2';toast.style.color='#dc2626';toast.style.border='1px solid #fecaca';toast.textContent=`${req.id} ${action.toLowerCase()} locally, but Sheet update failed. Click Refresh and try again if needed.`;}
+    else{
+      req.status=originalStatus;
+      if(action==='Rejected')req.rejectComment='';
+      save();
+      renderReqs(); updStats(); updBadge();
+      toast.style.background='#fef2f2';toast.style.color='#dc2626';toast.style.border='1px solid #fecaca';
+      toast.textContent=`${req.id} was NOT finalised because the Sheet update failed. Please refresh and retry.`;
+    }
     setTimeout(()=>{toast.style.display='none';},6000);
   }
 }
@@ -938,7 +1064,8 @@ function buildStatusEmail(req,action,comment){
       <p style="margin:4px 0 0;font-size:13px;opacity:0.9">${req.id} · App ID ${req.appId}</p>
     </div>
     <div style="padding:24px;background:#fff">
-      <p style="font-size:14px;color:#333">Request <b>${req.id}</b> has been <b>${action.toUpperCase()}</b> by <b>${mgrNames[req.mgEmail]||req.mgEmail}</b>.</p>
+      <p style="font-size:14px;color:#333">Request <b>${req.id}</b> is now <b>${action.toUpperCase()}</b> by <b>${mgrNames[req.mgEmail]||req.mgEmail}</b>.</p>
+      <div style="font-size:12px;color:#666;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin:10px 0">This request is now closed for approval. No further approve/reject action is permitted.</div>
       <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:6px 0;color:#888">App ID:</td><td style="font-weight:600">${req.appId}</td></tr>
         <tr><td style="padding:6px 0;color:#888">Amount:</td><td style="font-weight:700;color:${color}">₹${req.amt.toLocaleString('en-IN')}</td></tr>
@@ -1031,6 +1158,7 @@ async function raise(){
         <tr><td style="padding:6px 0;color:#888">NBFC:</td><td>${nbfc}</td></tr>
         <tr><td style="padding:6px 0;color:#888">Type:</td><td>${typ}</td></tr>
         <tr><td style="padding:6px 0;color:#888">Department:</td><td>${dept}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">Approval Authority:</td><td><b>${mgrNames[mgEmail]||mgEmail}</b></td></tr>
         <tr><td style="padding:6px 0;color:#888">Remarks:</td><td>${rmk}</td></tr>
       </table>
       <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin-top:8px"><tr>
@@ -1124,6 +1252,7 @@ function sync(msg,type){
 }
 
 function showSetupModal(){
+  if(!isAdmin(currentIdentity)){ return; }
   if(document.getElementById('setup-modal'))return;
   const modal=document.createElement('div');
   modal.id='setup-modal';
@@ -1150,7 +1279,9 @@ function saveGASFromModal(){
 }
 
 let dashFStatus='Pending';
-let chartMonthly=null, chartAmount=null, chartStatus=null, chartAuthority=null;
+let chartMonthly=null, chartAmount=null, chartStatus=null, chartAuthority=null, chartDepartment=null;
+let processingActions=new Set();
+
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function getRequestYear(r){
@@ -1223,7 +1354,7 @@ function drawBarChart(id,labels,values,opts={}){
     ctx.fillRect(x,pad.t+ph-bh,bw,bh);
     ctx.fillStyle='#777'; ctx.font='9px Inter, Arial, sans-serif'; ctx.textAlign='center';
     ctx.fillText(lab,x+bw/2,h-12);
-    if(values[i]>0){ctx.fillStyle='#555';ctx.font='9px Inter, Arial, sans-serif';ctx.fillText(String(values[i]),x+bw/2,pad.t+ph-bh-5);}
+    if(values[i]>0){ctx.fillStyle='#555';ctx.font='9px Inter, Arial, sans-serif';ctx.fillText(opts.formatValue?opts.formatValue(values[i]):String(values[i]),x+bw/2,pad.t+ph-bh-5);}
   });
 }
 function drawMultiBarChart(id,labels,series){
@@ -1260,13 +1391,67 @@ function drawDoughnut(id,items){
   let y=28;ctx.textAlign='left';ctx.font='11px Inter,Arial,sans-serif';
   items.forEach(item=>{ctx.fillStyle=item.color;ctx.fillRect(w*0.68,y-7,9,9);ctx.fillStyle='#555';ctx.fillText(`${item.name} (${item.value})`,w*0.68+15,y+1);y+=24;});
 }
-function renderDashboardCharts(year){
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function requestMatchesSearch(r,q){
+  if(!q)return true;
+  q=String(q).toLowerCase().trim();
+  return [r.id,r.appId,r.spoc,r.mgEmail,mgrNames[r.mgEmail],r.dept,r.nbfc,r.typ,r.rmk].some(v=>String(v||'').toLowerCase().includes(q));
+}
+function requestAgeMinutes(r){
+  if(!r || r.status!=='Pending')return 0;
+  const raw=`${r.date||''} ${r.time||''}`.trim();
+  const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(!m)return 0;
+  const [day,month,year]=[Number(m[1]),Number(m[2]),Number(m[3])];
+  const tm=String(r.time||'').match(/(\d{1,2}):(\d{2})(?:\s*(AM|PM))?/i);
+  let hh=tm?Number(tm[1]):0, mm=tm?Number(tm[2]):0;
+  if(tm&&tm[3]){const ap=tm[3].toUpperCase();if(ap==='PM'&&hh<12)hh+=12;if(ap==='AM'&&hh===12)hh=0;}
+  const created=new Date(year,month-1,day,hh,mm,0);
+  const diff=Math.max(0,Date.now()-created.getTime());
+  return Math.floor(diff/60000);
+}
+function formatAge(mins){
+  if(mins<60)return `${mins}m`;
+  const h=Math.floor(mins/60),m=mins%60;
+  if(h<24)return `${h}h ${m}m`;
+  return `${Math.floor(h/24)}d ${h%24}h`;
+}
+function ageClass(mins){return mins>=1440?'age-old':mins>=240?'age-warn':'age-fresh';}
+
+function populateDashboardFilters(){
+  const dept=document.getElementById('dash-dept');
+  const auth=document.getElementById('dash-authority');
+  if(!dept||!auth)return;
+  const dPrev=dept.value||'all', aPrev=auth.value||'all';
+  const depts=[...new Set(reqs.map(r=>r.dept).filter(Boolean))].sort();
+  const auths=[...new Set(reqs.map(r=>r.mgEmail).filter(Boolean))].sort();
+  dept.innerHTML='<option value="all">All Departments</option>'+depts.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+  auth.innerHTML='<option value="all">All Authorities</option>'+auths.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(mgrNames[v]||v)}</option>`).join('');
+  if(depts.includes(dPrev))dept.value=dPrev;
+  if(auths.includes(aPrev))auth.value=aPrev;
+}
+function getDashboardFilteredRequests(){
+  const year=Number(document.getElementById('dash-year')?.value)||new Date().getFullYear();
+  const q=document.getElementById('dash-search')?.value||'';
+  const status=document.getElementById('dash-status')?.value||'Pending';
+  const dept=document.getElementById('dash-dept')?.value||'all';
+  const auth=document.getElementById('dash-authority')?.value||'all';
+  return reqs.filter(r=>
+    getRequestYear(r)===year &&
+    requestMatchesSearch(r,q) &&
+    (status==='all'||r.status===status) &&
+    (dept==='all'||r.dept===dept) &&
+    (auth==='all'||r.mgEmail===auth)
+  );
+}
+function renderDashboardCharts(year, sourceData=null){
   const yr=Number(year)||new Date().getFullYear();
-  const data=reqs.filter(r=>getRequestYear(r)===yr);
-  const monthly=MONTHS.map((_,i)=>({approved:0,pending:0,rejected:0,amount:0}));
+  const data=sourceData||reqs.filter(r=>getRequestYear(r)===yr);
+  const monthly=MONTHS.map(()=>({approved:0,pending:0,rejected:0,amount:0}));
   data.forEach(r=>{
     const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-    if(!m)return; const idx=Number(m[2])-1;if(idx<0||idx>11)return;
+    if(!m)return;
+    const idx=Number(m[2])-1;if(idx<0||idx>11)return;
     if(r.status==='Approved'){monthly[idx].approved++;monthly[idx].amount+=Number(r.amt)||0;}
     else if(r.status==='Pending')monthly[idx].pending++;
     else if(r.status==='Rejected')monthly[idx].rejected++;
@@ -1276,58 +1461,123 @@ function renderDashboardCharts(year){
     {name:'Pending',values:monthly.map(x=>x.pending),color:'#d97706'},
     {name:'Rejected',values:monthly.map(x=>x.rejected),color:'#dc2626'}
   ]);
-  drawBarChart('chart-amount',MONTHS,monthly.map(x=>x.amount),{barColor:'#5b7be8'});
+  drawBarChart('chart-amount',MONTHS,monthly.map(x=>x.amount),{barColor:'#5b7be8',formatValue:v=>'₹'+Number(v).toLocaleString('en-IN')});
   drawDoughnut('chart-status',[
     {name:'Approved',value:data.filter(r=>r.status==='Approved').length,color:'#65a30d'},
     {name:'Pending',value:data.filter(r=>r.status==='Pending').length,color:'#d97706'},
     {name:'Rejected',value:data.filter(r=>r.status==='Rejected').length,color:'#dc2626'}
   ]);
-  const authItems=Object.entries(mgrNames).filter(([k])=>k!=='neel_aamir').map(([email,name])=>({name:name.split(' ')[0],value:data.filter(r=>r.mgEmail===email).length}));
+  const authMap={};
+  data.forEach(r=>{const k=r.mgEmail||'Unassigned';authMap[k]=(authMap[k]||0)+1;});
+  const authItems=Object.entries(authMap).map(([email,value])=>({name:(mgrNames[email]||email).split(' ').slice(0,2).join(' '),value}));
   drawBarChart('chart-authority',authItems.map(x=>x.name),authItems.map(x=>x.value),{barColor:'#007FFF'});
+  const deptMap={};
+  data.forEach(r=>{const k=r.dept||'Unassigned';deptMap[k]=(deptMap[k]||0)+1;});
+  const deptItems=Object.entries(deptMap).sort((a,b)=>b[1]-a[1]);
+  drawBarChart('chart-department',deptItems.map(x=>x[0]),deptItems.map(x=>x[1]),{barColor:'#7c3aed'});
 }
 
 function renderDash(){
   populateYearFilter();
-  const approved=reqs.filter(r=>r.status==='Approved');
-  const pending=reqs.filter(r=>r.status==='Pending');
-  document.getElementById('d-total').textContent=reqs.length;
+  populateDashboardFilters();
+  const data=getDashboardFilteredRequests();
+  const pending=data.filter(r=>r.status==='Pending');
+  const approved=data.filter(r=>r.status==='Approved');
+  const rejected=data.filter(r=>r.status==='Rejected');
+  const pendingAmt=pending.reduce((s,r)=>s+(Number(r.amt)||0),0);
+  const approvedAmt=approved.reduce((s,r)=>s+(Number(r.amt)||0),0);
+  const decided=approved.length+rejected.length;
+  const completion=decided?Math.round((approved.length/decided)*100):0;
+
+  document.getElementById('d-total').textContent=data.length;
   document.getElementById('d-pending').textContent=pending.length;
   document.getElementById('d-approved').textContent=approved.length;
-  document.getElementById('d-amt').textContent='₹'+approved.reduce((s,r)=>s+(Number(r.amt)||0),0).toLocaleString('en-IN');
+  document.getElementById('d-rejected').textContent=rejected.length;
+  document.getElementById('d-pending-sub').textContent='₹'+pendingAmt.toLocaleString('en-IN')+' pending amount';
+  document.getElementById('d-approved-sub').textContent='₹'+approvedAmt.toLocaleString('en-IN')+' approved amount';
+  document.getElementById('d-rejected-sub').textContent=decided?`${completion}% of decided requests approved`:'No completed actions';
 
   const year=Number(document.getElementById('dash-year').value)||new Date().getFullYear();
-  renderDashboardCharts(year);
+  renderDashboardCharts(year,data);
 
   const breakdown=document.getElementById('d-authority-breakdown');
-  breakdown.innerHTML=Object.entries(mgrNames).filter(([k])=>k!=='neel_aamir').map(([email,name])=>{
-    const mine=reqs.filter(r=>r.mgEmail===email);
+  const auths=[...new Set(data.map(r=>r.mgEmail).filter(Boolean))];
+  breakdown.innerHTML=auths.length?auths.map(email=>{
+    const mine=data.filter(r=>r.mgEmail===email);
     const p=mine.filter(r=>r.status==='Pending');
     const a=mine.filter(r=>r.status==='Approved');
-    return `<div style="background:${p.length>0?'#fffbeb':'#f8f8f5'};border:1px solid ${p.length>0?'#fde68a':'#e5e5e0'};border-radius:9px;padding:12px 14px">
-      <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:6px">${name}</div>
-      <div style="display:flex;gap:12px">
-        <div><div style="font-size:18px;font-weight:700;color:${p.length>0?'#a16207':'#aaa'}">${p.length}</div><div style="font-size:10px;color:#aaa">Pending</div></div>
+    const rr=mine.filter(r=>r.status==='Rejected');
+    const maxAge=p.reduce((m,r)=>Math.max(m,requestAgeMinutes(r)),0);
+    return `<div style="background:${p.length?'#fffbeb':'#f8f8f5'};border:1px solid ${p.length?'#fde68a':'#e5e5e0'};border-radius:9px;padding:12px 14px">
+      <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:7px">${escapeHtml(mgrNames[email]||email)}</div>
+      <div style="display:flex;gap:14px">
+        <div><div style="font-size:18px;font-weight:700;color:${p.length?'#a16207':'#aaa'}">${p.length}</div><div style="font-size:10px;color:#aaa">Pending</div></div>
         <div><div style="font-size:18px;font-weight:700;color:#15803d">${a.length}</div><div style="font-size:10px;color:#aaa">Approved</div></div>
+        <div><div style="font-size:18px;font-weight:700;color:#dc2626">${rr.length}</div><div style="font-size:10px;color:#aaa">Rejected</div></div>
       </div>
+      ${p.length?`<div style="margin-top:8px"><span class="age-pill ${ageClass(maxAge)}"><i class="ti ti-clock"></i> Oldest ${formatAge(maxAge)}</span></div>`:''}
     </div>`;
-  }).join('');
+  }).join(''):'<div class="empty" style="padding:1.5rem">No authority workload in this filter.</div>';
 
   const list=document.getElementById('d-list');
-  const filtered=dashFStatus==='all'?reqs:reqs.filter(r=>r.status===dashFStatus);
-  if(!filtered.length){list.innerHTML='<div class="empty">No requests match this filter.</div>';return;}
-  list.innerHTML=[...filtered].reverse().map(r=>`
-    <div class="card">
+  document.getElementById('d-result-count').textContent=`${data.length} request${data.length===1?'':'s'}`;
+  if(!data.length){list.innerHTML='<div class="empty"><i class="ti ti-search-off" style="font-size:36px;display:block;margin-bottom:8px"></i>No requests match the selected filters.</div>';return;}
+  list.innerHTML=[...data].sort((a,b)=>String(b.id).localeCompare(String(a.id))).map(r=>{
+    const age=r.status==='Pending'?requestAgeMinutes(r):0;
+    return `<div class="card" style="border-left:3px solid ${r.status==='Pending'?'#f59e0b':r.status==='Approved'?'#22c55e':'#ef4444'}">
       <div class="ch">
-        <div><div class="ct">${r.id} · App ID: ${r.appId}</div><div class="cs">${r.date} ${r.time} · SPOC: ${r.spoc}</div></div>
-        <span class="badge b-${r.status.toLowerCase()}">${r.status}</span>
+        <div><div class="ct">${escapeHtml(r.id)} · App ID: ${escapeHtml(r.appId)}</div><div class="cs">${escapeHtml(r.date)} ${escapeHtml(r.time)} · SPOC: <strong>${escapeHtml(r.spoc)}</strong></div></div>
+        <span class="badge b-${String(r.status||'').toLowerCase()}">${escapeHtml(r.status)}</span>
       </div>
       <div class="cmeta">
-        <div><div class="ml">NBFC</div><div class="mv">${r.nbfc}</div></div>
+        <div><div class="ml">NBFC</div><div class="mv">${escapeHtml(r.nbfc)}</div></div>
         <div><div class="ml">Amount</div><div class="mv amt">₹${(Number(r.amt)||0).toLocaleString('en-IN')}</div></div>
-        <div><div class="ml">Type</div><div class="mv">${r.typ}</div></div>
-        <div><div class="ml">Authority</div><div class="mv">${mgrNames[r.mgEmail]||r.mgEmail}</div></div>
+        <div><div class="ml">Type</div><div class="mv">${escapeHtml(r.typ)}</div></div>
+        <div><div class="ml">Authority</div><div class="mv">${escapeHtml(mgrNames[r.mgEmail]||r.mgEmail)}</div></div>
       </div>
-    </div>`).join('');
+      <div class="status-line">
+        <span class="authority-chip"><i class="ti ti-building"></i>${escapeHtml(r.dept||'Unassigned')}</span>
+        ${r.status==='Pending'?`<span class="age-pill ${ageClass(age)}"><i class="ti ti-clock"></i> Pending ${formatAge(age)}</span>`:`<span style="color:#999">Actioned ${escapeHtml(r.actionDate||'')}</span>`}
+      </div>
+      ${r.status==='Rejected'&&r.rejectComment?`<div class="rejnote"><i class="ti ti-alert-circle"></i> <strong>Rejection reason:</strong> ${escapeHtml(r.rejectComment)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function clearDashboardFilters(){
+  document.getElementById('dash-search').value='';
+  document.getElementById('dash-status').value='Pending';
+  document.getElementById('dash-dept').value='all';
+  document.getElementById('dash-authority').value='all';
+  renderDash();
+}
+async function refreshDashboard(){
+  const el=document.getElementById('dash-sync');
+  if(el)el.innerHTML='<span class="sdot sp"></span>Syncing…';
+  await loadRequestsFromSheet(true);
+  populateDashboardFilters();
+  renderDash();
+  if(el)el.innerHTML='<span class="sdot sok"></span>Synced '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function csvEscape(v){
+  const s=String(v??'').replace(/"/g,'""');
+  return `"${s}"`;
+}
+function exportDashboardCSV(){
+  const data=getDashboardFilteredRequests();
+  if(!data.length){alert('No requests match the current dashboard filters.');return;}
+  const headers=['Request ID','Date','Time','App ID','NBFC / Lender','Amount','Type','SPOC','Department','Approval Authority','CC Email','Status','Action Date','Reject Reason'];
+  const rows=data.map(r=>[
+    r.id,r.date,r.time,r.appId,r.nbfc,r.amt,r.typ,r.spoc,r.dept||'',
+    mgrNames[r.mgEmail]||r.mgEmail||'',r.ccEmail||'',r.status||'',r.actionDate||'',r.rejectComment||''
+  ]);
+  const csv=[headers,...rows].map(row=>row.map(csvEscape).join(',')).join('\\r\\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`loan-closure-approvals-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),500);
 }
 
 window.addEventListener('resize',()=>{
