@@ -186,7 +186,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
             <span id="appIdFileSize" style="color:#60a5fa;font-size:11px"></span>
             <i class="ti ti-x" onclick="clearAppIdFile()" style="cursor:pointer;color:#dc2626"></i>
           </div>
-          <div style="font-size:10px;color:#aaa;margin-top:3px">Upload an Excel with one App ID per row. Every row will be added to the Google Sheet, including duplicates. Max 5 MB.</div>
+          <div style="font-size:10px;color:#aaa;margin-top:3px">Upload Excel with <b>App ID</b> in column 1 and <b>Amount</b> in column 2. Every row will be added to the Google Sheet, including duplicates. Max 5 MB.</div>
           <button type="button" onclick="downloadSampleAppIdExcel()" style="margin-top:7px;background:#fff;border:1px solid #007FFF;color:#007FFF;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit"><i class="ti ti-download"></i> Download Sample App ID Excel</button>
         </div>
       </div>
@@ -214,7 +214,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
         </select>
         <input type="text" id="nbfcOther" placeholder="Enter NBFC / Lender name (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb">
       </div>
-      <div class="fg"><label>Approval Amount (₹)</label><input type="number" id="amt" placeholder="e.g. 500" oninput="upd()"></div>
+      <div class="fg"><label>Approval Amount (₹)</label><input type="number" id="amt" placeholder="e.g. 500" oninput="upd()"><div style="font-size:10px;color:#aaa;margin-top:3px">For Excel bulk upload, amount is taken from column 2 for each App ID.</div></div>
       <div class="fg"><label>Type</label>
         <select id="typ" onchange="handleTypChange(this.value)">
           <option value="">Select type</option>
@@ -505,6 +505,12 @@ function isMine(req, identity){
 }
 
 let appIdFileData=null;
+function parseExcelAmount(value){
+  const cleaned=String(value??'').trim().replace(/[₹,\s]/g,'');
+  if(!cleaned)return NaN;
+  const n=Number(cleaned);
+  return Number.isFinite(n)?n:NaN;
+}
 function handleAppIdFile(input){
   const file=input.files&&input.files[0];
   if(!file){clearAppIdFile();return;}
@@ -516,30 +522,35 @@ function handleAppIdFile(input){
   reader.onload=async()=>{
     try{
       const ext=(file.name.split('.').pop()||'').toLowerCase();
-      let ids=[];
+      const items=[];
+      const addRow=(appId,amount,idx)=>{
+        const id=String(appId??'').trim();
+        if(!id)return;
+        if(idx===0 && /^(app\s*id|application\s*id|loan\s*id)$/i.test(id))return;
+        const parsedAmount=parseExcelAmount(amount);
+        items.push({appId:id,amount:parsedAmount});
+      };
       if(ext==='csv'){
         const text=String(reader.result||'').replace(/^\uFEFF/,'');
-        const lines=text.split(/\r?\n/);
-        lines.forEach((line,idx)=>{
-          const value=String(line.split(',')[0]||'').trim().replace(/^"|"$/g,'');
-          if(!value)return;
-          if(idx===0 && /^(app\s*id|application\s*id|loan\s*id)$/i.test(value))return;
-          ids.push(value);
+        text.split(/\r?\n/).forEach((line,idx)=>{
+          if(!line.trim())return;
+          const cols=line.split(',').map(v=>String(v||'').trim().replace(/^"|"$/g,''));
+          addRow(cols[0],cols[1],idx);
         });
       }else{
         if(typeof XLSX==='undefined') throw new Error('Excel reader is unavailable.');
         const wb=XLSX.read(reader.result,{type:'array'});
         const firstSheet=wb.Sheets[wb.SheetNames[0]];
         const rows=XLSX.utils.sheet_to_json(firstSheet,{header:1,defval:''});
-        rows.forEach((row,idx)=>{
-          const value=String((row&&row[0])??'').trim();
-          if(!value)return;
-          if(idx===0 && /^(app\s*id|application\s*id|loan\s*id)$/i.test(value))return;
-          ids.push(value);
-        });
+        rows.forEach((row,idx)=>addRow(row&&row[0],row&&row[1],idx));
       }
-      if(!ids.length){
-        alert('No App IDs found. Please use the first column for App IDs.');
+      if(!items.length){
+        alert('No App IDs found. Please use the first column for App IDs and the second column for Amount.');
+        clearAppIdFile();return;
+      }
+      const invalid=items.filter(x=>!Number.isFinite(x.amount)||x.amount<=0);
+      if(invalid.length){
+        alert(`Invalid or missing Amount in ${invalid.length} row(s). Please provide a valid positive amount in the second column for every App ID.`);
         clearAppIdFile();return;
       }
       appIdFileData={
@@ -547,15 +558,15 @@ function handleAppIdFile(input){
         mimeType:file.type||'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         size:file.size,
         base64:String(reader.result).split(',')[1]||'',
-        appIds:ids
+        items
       };
-      document.getElementById('appId').value='Batch — '+ids.length+' IDs';
+      document.getElementById('appId').value='Batch — '+items.length+' IDs';
       document.getElementById('appIdFileName').textContent=file.name;
-      document.getElementById('appIdFileSize').textContent=(file.size/1024).toFixed(0)+' KB · '+ids.length+' App IDs';
+      document.getElementById('appIdFileSize').textContent=(file.size/1024).toFixed(0)+' KB · '+items.length+' App IDs + Amounts';
       document.getElementById('appIdFileInfo').style.display='flex';
     }catch(e){
       console.error(e);
-      alert('Could not read the Excel/CSV. Please check the file format and try again.');
+      alert('Could not read the Excel/CSV. Please use columns: App ID, Amount.');
       clearAppIdFile();
     }
   };
@@ -563,20 +574,26 @@ function handleAppIdFile(input){
   if((file.name||'').toLowerCase().endsWith('.csv')) reader.readAsText(file);
   else reader.readAsArrayBuffer(file);
 }
-
 function downloadSampleAppIdExcel(){
   if(typeof XLSX==='undefined'){
     alert('Excel download is temporarily unavailable. Please try again.');
     return;
   }
-  const rows=[['App ID'],['1549692'],['1549693'],['1549694'],['1549695'],['1549692']];
+  const rows=[
+    ['App ID','Amount'],
+    ['APP100001',250000],
+    ['APP100002',175000],
+    ['APP100003',325000],
+    ['APP100004',500000],
+    ['APP100005',125000],
+    ['APP100002',175000]
+  ];
   const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:20}];
+  ws['!cols']=[{wch:20},{wch:18}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'App IDs');
-  XLSX.writeFile(wb,'Sample_App_ID_Format.xlsx');
+  XLSX.writeFile(wb,'Sample_App_ID_Amount_Format.xlsx');
 }
-
 function clearAppIdFile(){
   appIdFileData=null;
   const inp=document.getElementById('appIdFile');
@@ -1135,10 +1152,11 @@ function buildStatusEmail(req,action,comment){
 
 async function raise(){
   const typedAppId=document.getElementById('appId').value.trim();
-  const batchIds=appIdFileData&&Array.isArray(appIdFileData.appIds)?appIdFileData.appIds.filter(Boolean):[];
-  const appIds=batchIds.length?batchIds:(typedAppId?[typedAppId]:[]);
+  const isBatch=!!(appIdFileData&&Array.isArray(appIdFileData.items)&&appIdFileData.items.length);
+  const batchItems=isBatch?appIdFileData.items:[];
+  const appIds=isBatch?batchItems.map(x=>x.appId):(typedAppId?[typedAppId]:[]);
   const nbfc=getNbfc();
-  const amt=parseFloat(document.getElementById('amt').value);
+  const singleAmt=parseFloat(document.getElementById('amt').value);
   const typ=getTyp();
   const spoc=getSpoc();
   const rmk=document.getElementById('rmk').value.trim();
@@ -1152,7 +1170,10 @@ async function raise(){
 
   if(!appIds.length){ tokErr.textContent='Please enter App ID or attach an Excel.'; tokErr.style.display='block'; return; }
   if(!nbfc){ tokErr.textContent='Please select NBFC / Lender.'; tokErr.style.display='block'; return; }
-  if(!amt||amt<=0){ tokErr.textContent='Please enter a valid Approval Amount.'; tokErr.style.display='block'; return; }
+  if(isBatch){
+    const invalid=batchItems.some(x=>!Number.isFinite(x.amount)||x.amount<=0);
+    if(invalid){ tokErr.textContent='Every Excel row must have a valid positive Amount in column 2.'; tokErr.style.display='block'; return; }
+  }else if(!singleAmt||singleAmt<=0){ tokErr.textContent='Please enter a valid Approval Amount.'; tokErr.style.display='block'; return; }
   if(!typ){ tokErr.textContent='Please select Type.'; tokErr.style.display='block'; return; }
   if(!spoc){ tokErr.textContent='Please enter your SPOC email.'; tokErr.style.display='block'; return; }
   if(!rmk){ tokErr.textContent='Please enter Remarks / Reason for approval.'; tokErr.style.display='block'; return; }
@@ -1168,10 +1189,12 @@ async function raise(){
   const createdRequests=[];
   let nextReqNo=Math.max(0,...reqs.map(r=>{const m=String(r.id||'').match(/^REQ-(\d+)$/i);return m?Number(m[1]):0;}).filter(Number.isFinite))+1;
 
-  for(const oneAppId of appIds){
+  const requestItems=isBatch?batchItems:[{appId:typedAppId,amount:singleAmt}];
+  for(const item of requestItems){
     const reqId='REQ-'+nextReqNo++;
+    const rowAmount=Number(item.amount);
     const newReq={
-      id:reqId,date:dateStr,time:timeStr,appId:oneAppId,nbfc,amt,mode:'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,
+      id:reqId,date:dateStr,time:timeStr,appId:item.appId,nbfc,amt:rowAmount,mode:'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,
       status:'Pending',hasAttachment:!!appIdFileData,attachmentName:appIdFileData?appIdFileData.name:'',actionDate:'',rejectComment:''
     };
     reqs.push(newReq);
@@ -1179,13 +1202,12 @@ async function raise(){
     createdRequests.push(newReq);
   }
 
-  // Every App ID gets its own row in Google Sheet. Duplicate App IDs are intentionally allowed.
+  // Every Excel row gets its own Google Sheet row. Duplicate App IDs are intentionally allowed.
   for(const newReq of createdRequests){
-    const sheetRow=[newReq.id,dateStr,timeStr,newReq.appId,nbfc,amt,'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,'Pending',appIdFileData?appIdFileData.name:'None','',''];
+    const sheetRow=[newReq.id,dateStr,timeStr,newReq.appId,nbfc,newReq.amt,'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,'Pending',appIdFileData?appIdFileData.name:'None','',''];
     await syncSheet(sheetRow);
   }
 
-  // Send one consolidated email for a batch, while keeping each App ID as a separate Sheet request row.
   const firstReq=createdRequests[0];
   const requestIds=createdRequests.map(r=>r.id).join(', ');
   const siteUrl=location.origin+location.pathname;
@@ -1194,12 +1216,13 @@ async function raise(){
     const tok=actionToken(r.id,mgEmail);
     const approveLink=`${siteUrl}?act=approve&id=${encodeURIComponent(r.id)}&a=${authParam}&t=${tok}`;
     const rejectLink=`${siteUrl}?act=reject&id=${encodeURIComponent(r.id)}&a=${authParam}&t=${tok}`;
-    return `<tr><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.id)}</td><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.appId)}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:center"><a href="${approveLink}" style="color:#16a34a;font-weight:700;text-decoration:none">APPROVE</a> &nbsp; <a href="${rejectLink}" style="color:#dc2626;font-weight:700;text-decoration:none">REJECT</a></td></tr>`;
+    return `<tr><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.id)}</td><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.appId)}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:right">₹${r.amt.toLocaleString('en-IN')}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:center"><a href="${approveLink}" style="color:#16a34a;font-weight:700;text-decoration:none">APPROVE</a> &nbsp; <a href="${rejectLink}" style="color:#dc2626;font-weight:700;text-decoration:none">REJECT</a></td></tr>`;
   }).join('');
   const subject=createdRequests.length===1
     ? `Loan Closure Approval – App ID ${firstReq.appId}`
     : `Loan Closure Approval – ${createdRequests.length} App IDs (${firstReq.id} to ${createdRequests[createdRequests.length-1].id})`;
-  const htmlBody=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
+  const totalAmount=createdRequests.reduce((sum,r)=>sum+r.amt,0);
+  const htmlBody=`<div style="font-family:Arial,sans-serif;max-width:680px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
     <div style="background:#007FFF;color:#fff;padding:18px 24px">
       <h2 style="margin:0;font-size:18px">Loan Closure Approval Request</h2>
       <p style="margin:4px 0 0;font-size:13px;opacity:0.9">${createdRequests.length} request(s): ${requestIds}</p>
@@ -1207,23 +1230,23 @@ async function raise(){
     <div style="padding:24px;background:#fff">
       <p style="font-size:14px;color:#333">Dear Approver,<br/>A new loan closure shortfall approval request has been raised by <b>${escapeHtml(spoc)}</b>.</p>
       <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:6px 0;color:#888">App IDs:</td><td style="font-weight:600">${createdRequests.map(r=>escapeHtml(r.appId)).join('<br>')}</td></tr>
-        <tr><td style="padding:6px 0;color:#888">Amount per request:</td><td style="font-weight:700;color:#007FFF">₹${amt.toLocaleString('en-IN')}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">Total Requests:</td><td style="font-weight:600">${createdRequests.length}</td></tr>
+        <tr><td style="padding:6px 0;color:#888">Total Amount:</td><td style="font-weight:700;color:#007FFF">₹${totalAmount.toLocaleString('en-IN')}</td></tr>
         <tr><td style="padding:6px 0;color:#888">NBFC:</td><td>${escapeHtml(nbfc)}</td></tr>
         <tr><td style="padding:6px 0;color:#888">Type:</td><td>${escapeHtml(typ)}</td></tr>
         <tr><td style="padding:6px 0;color:#888">Department:</td><td>${escapeHtml(dept)}</td></tr>
         <tr><td style="padding:6px 0;color:#888">Approval Authority:</td><td><b>${escapeHtml(mgrNames[mgEmail]||mgEmail)}</b></td></tr>
         <tr><td style="padding:6px 0;color:#888">Remarks:</td><td>${escapeHtml(rmk)}</td></tr>
       </table>
-      <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:12px"><thead><tr style="background:#f7f7f5"><th style="padding:7px;text-align:left">Request</th><th style="padding:7px;text-align:left">App ID</th><th style="padding:7px;text-align:center">Action</th></tr></thead><tbody>${requestActionRows}</tbody></table>
-      <p style="font-size:11px;color:#aaa;text-align:center;margin:14px 0 0">The Excel rows are stored individually in the Google Sheet. Duplicate App IDs are allowed.</p>
+      <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:12px"><thead><tr style="background:#f7f7f5"><th style="padding:7px;text-align:left">Request</th><th style="padding:7px;text-align:left">App ID</th><th style="padding:7px;text-align:right">Amount</th><th style="padding:7px;text-align:center">Action</th></tr></thead><tbody>${requestActionRows}</tbody></table>
+      <p style="font-size:11px;color:#aaa;text-align:center;margin:14px 0 0">Each Excel row is stored individually in the Google Sheet. Duplicate App IDs are allowed.</p>
     </div>
   </div>`;
-  const textBody=`Approval Requests: ${requestIds}\nApp IDs:\n${createdRequests.map(r=>r.appId).join('\n')}\nAmount per request: ₹${amt}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
+  const textBody=`Approval Requests: ${requestIds}\n\nApp ID / Amount:\n${createdRequests.map(r=>r.appId+' — ₹'+r.amt).join('\n')}\n\nTotal Amount: ₹${totalAmount}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
 
   await sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, appIdFileData, 'App IDs '+createdRequests.map(r=>r.appId).join(', '));
 
-  tokOk.textContent=`${createdRequests.length} request(s) submitted successfully! All App IDs were added to the Sheet, including duplicates.`;
+  tokOk.textContent=`${createdRequests.length} request(s) submitted successfully! App IDs and their amounts were added to the Sheet, including duplicates.`;
   tokOk.style.display='block';
 
   document.getElementById('appId').value='';
