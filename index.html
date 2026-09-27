@@ -1109,7 +1109,9 @@ async function raise(){
   sbtn.disabled=true; sbtn.textContent='Submitting...';
 
   const d=new Date();
-  const reqId='REQ-'+Date.now().toString().slice(-6);
+  const existingNumbers=reqs.map(r=>{const m=String(r.id||'').match(/^REQ-(\d+)$/i);return m?Number(m[1]):0;}).filter(Number.isFinite);
+      const nextReqNo=Math.max(0,...existingNumbers)+1;
+      const reqId='REQ-'+nextReqNo;
   const dateStr=d.toLocaleDateString('en-GB');
   const timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
 
