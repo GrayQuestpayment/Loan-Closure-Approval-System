@@ -148,6 +148,22 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
 .admin-only{display:none!important}
 .admin-only.admin-visible{display:inline-flex!important}
 
+
+.report-section{margin:0 0 1.35rem;background:#fff;border:1px solid #e7e7e2;border-radius:12px;overflow:hidden}
+.report-section-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #eee;background:#fafaf8}
+.report-title{font-size:14px;font-weight:750;color:#111}
+.report-sub{font-size:11px;color:#888;margin-top:3px}
+.report-table-wrap{overflow:auto;max-width:100%}
+.report-table{width:100%;border-collapse:collapse;min-width:920px;font-size:11px}
+.report-table th{position:sticky;top:0;background:#f6f6f2;color:#666;text-align:left;font-size:10px;font-weight:750;letter-spacing:.03em;padding:9px 10px;border-bottom:1px solid #e5e5e0;white-space:nowrap}
+.report-table td{padding:9px 10px;border-bottom:1px solid #f0f0ec;color:#333;white-space:nowrap}
+.report-table tbody tr:hover{background:#fbfbf8}
+.report-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.report-table td.approved{color:#15803d;font-weight:700}
+.report-table td.rejected{color:#dc2626;font-weight:700}
+.report-table td.pending{color:#a16207;font-weight:700}
+.report-empty{padding:18px;text-align:center;color:#999;font-size:12px}
+@media(max-width:800px){.report-section-head{align-items:flex-start}.report-table{min-width:860px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -445,6 +461,51 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
       <div class="chart-card"><div class="chart-title">Status Breakdown</div><div class="chart-sub">Current request distribution</div><div style="position:relative;height:220px"><canvas id="chart-status"></canvas></div></div>
       <div class="chart-card"><div class="chart-title">Requests by Authority</div><div class="chart-sub">Assigned workload</div><div style="position:relative;height:220px"><canvas id="chart-authority"></canvas></div></div>
       <div class="chart-card" style="grid-column:1/-1"><div class="chart-title">Requests by Department</div><div class="chart-sub">Department workload for the selected year</div><div style="position:relative;height:220px"><canvas id="chart-department"></canvas></div></div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-head">
+        <div>
+          <div class="report-title">Monthly Summary</div>
+          <div class="report-sub">Complete year-wise request, amount, approval and rejection summary</div>
+        </div>
+      </div>
+      <div class="report-table-wrap">
+        <table class="report-table" id="monthly-summary-table">
+          <thead><tr><th>Month</th><th>Raised</th><th>Raised Amount</th><th>Approved</th><th>Approved Amount</th><th>Rejected</th><th>Rejected Amount</th><th>Pending</th><th>Pending Amount</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-head">
+        <div>
+          <div class="report-title">Authority-wise Summary</div>
+          <div class="report-sub">All registered authorities are shown, including authorities with no requests</div>
+        </div>
+      </div>
+      <div class="report-table-wrap">
+        <table class="report-table" id="authority-summary-table">
+          <thead><tr><th>Authority</th><th>Raised</th><th>Raised Amount</th><th>Approved</th><th>Approved Amount</th><th>Rejected</th><th>Rejected Amount</th><th>Pending</th><th>Pending Amount</th><th>Approval Rate</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-head">
+        <div>
+          <div class="report-title">SPOC-wise Summary</div>
+          <div class="report-sub">Requests raised by each SPOC with total amount and current status</div>
+        </div>
+      </div>
+      <div class="report-table-wrap">
+        <table class="report-table" id="spoc-summary-table">
+          <thead><tr><th>SPOC</th><th>Requests Raised</th><th>Total Amount</th><th>Approved</th><th>Approved Amount</th><th>Rejected</th><th>Rejected Amount</th><th>Pending</th><th>Pending Amount</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
 
     <div style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Pending by Authority</div>
@@ -1533,9 +1594,11 @@ function populateDashboardFilters(){
   if(!dept||!auth)return;
   const dPrev=dept.value||'all', aPrev=auth.value||'all';
   const depts=[...new Set(reqs.map(r=>r.dept).filter(Boolean))].sort();
-  const auths=[...new Set(reqs.map(r=>r.mgEmail).filter(Boolean))].sort();
+  const authSet=new Set(reqs.map(r=>r.mgEmail).filter(Boolean));
+  if(typeof AUTHORITY_DEFAULTS==='object') Object.keys(AUTHORITY_DEFAULTS).forEach(v=>authSet.add(v));
+  const auths=[...authSet].sort();
   dept.innerHTML='<option value="all">All Departments</option>'+depts.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-  auth.innerHTML='<option value="all">All Authorities</option>'+auths.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(mgrNames[v]||v)}</option>`).join('');
+  auth.innerHTML='<option value="all">All Authorities</option>'+auths.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml((mgrNames[v]||(AUTHORITY_DEFAULTS[v]&&AUTHORITY_DEFAULTS[v].name)||v))}</option>`).join('');
   if(depts.includes(dPrev))dept.value=dPrev;
   if(auths.includes(aPrev))auth.value=aPrev;
 }
@@ -1586,6 +1649,48 @@ function renderDashboardCharts(year, sourceData=null){
   drawBarChart('chart-department',deptItems.map(x=>x[0]),deptItems.map(x=>x[1]),{barColor:'#7c3aed'});
 }
 
+function money(v){return '₹'+(Number(v)||0).toLocaleString('en-IN');}
+function fmtNum(v){return (Number(v)||0).toLocaleString('en-IN');}
+function summaryBucket(){return {count:0,amount:0,approved:0,approvedAmount:0,rejected:0,rejectedAmount:0,pending:0,pendingAmount:0};}
+function addSummaryRow(bucket,r){
+  bucket.count++; bucket.amount+=Number(r.amt)||0;
+  if(r.status==='Approved'){bucket.approved++;bucket.approvedAmount+=Number(r.amt)||0;}
+  else if(r.status==='Rejected'){bucket.rejected++;bucket.rejectedAmount+=Number(r.amt)||0;}
+  else if(r.status==='Pending'){bucket.pending++;bucket.pendingAmount+=Number(r.amt)||0;}
+}
+function getYearData(year){return reqs.filter(r=>getRequestYear(r)===Number(year));}
+function renderMonthlySummary(year){
+  const body=document.querySelector('#monthly-summary-table tbody'); if(!body)return;
+  const data=getYearData(year), months=MONTHS.map((name)=>({name,...summaryBucket()}));
+  data.forEach(r=>{const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/); if(!m)return; const i=Number(m[2])-1;if(i>=0&&i<12)addSummaryRow(months[i],r);});
+  body.innerHTML=months.map(x=>`<tr><td><b>${x.name}</b></td><td class="num">${fmtNum(x.count)}</td><td class="num">${money(x.amount)}</td><td class="num approved">${fmtNum(x.approved)}</td><td class="num approved">${money(x.approvedAmount)}</td><td class="num rejected">${fmtNum(x.rejected)}</td><td class="num rejected">${money(x.rejectedAmount)}</td><td class="num pending">${fmtNum(x.pending)}</td><td class="num pending">${money(x.pendingAmount)}</td></tr>`).join('');
+}
+function renderAuthoritySummary(year){
+  const body=document.querySelector('#authority-summary-table tbody'); if(!body)return;
+  const data=getYearData(year), map={};
+  const authorityKeys=typeof AUTHORITY_DEFAULTS==='object'?Object.keys(AUTHORITY_DEFAULTS):[];
+  authorityKeys.forEach(email=>map[email]=summaryBucket());
+  data.forEach(r=>{const key=r.mgEmail||'unassigned';if(!map[key])map[key]=summaryBucket();addSummaryRow(map[key],r);});
+  const rows=Object.entries(map).map(([email,x])=>({email,...x}));
+  const unassigned=rows.filter(x=>x.email==='unassigned');
+  const registered=rows.filter(x=>x.email!=='unassigned');
+  registered.sort((a,b)=>a.email.localeCompare(b.email));
+  const ordered=[...registered,...unassigned];
+  body.innerHTML=ordered.map(x=>{
+    const name=x.email==='unassigned'?'Unassigned':(mgrNames[x.email]||(AUTHORITY_DEFAULTS[x.email]&&AUTHORITY_DEFAULTS[x.email].name)||x.email);
+    const rate=(x.approved+x.rejected)?Math.round(x.approved/(x.approved+x.rejected)*100):0;
+    return `<tr><td><b>${escapeHtml(name)}</b><div style="font-size:9px;color:#aaa;margin-top:2px">${escapeHtml(x.email)}</div></td><td class="num">${fmtNum(x.count)}</td><td class="num">${money(x.amount)}</td><td class="num approved">${fmtNum(x.approved)}</td><td class="num approved">${money(x.approvedAmount)}</td><td class="num rejected">${fmtNum(x.rejected)}</td><td class="num rejected">${money(x.rejectedAmount)}</td><td class="num pending">${fmtNum(x.pending)}</td><td class="num pending">${money(x.pendingAmount)}</td><td class="num">${rate}%</td></tr>`;
+  }).join('');
+}
+function renderSpocSummary(year){
+  const body=document.querySelector('#spoc-summary-table tbody'); if(!body)return;
+  const data=getYearData(year), map={};
+  data.forEach(r=>{const key=String(r.spoc||'Unspecified').trim()||'Unspecified';if(!map[key])map[key]=summaryBucket();addSummaryRow(map[key],r);});
+  const rows=Object.entries(map).map(([spoc,x])=>({spoc,...x})).sort((a,b)=>b.count-a.count||b.amount-a.amount||a.spoc.localeCompare(b.spoc));
+  body.innerHTML=rows.length?rows.map(x=>`<tr><td><b>${escapeHtml(x.spoc)}</b></td><td class="num">${fmtNum(x.count)}</td><td class="num">${money(x.amount)}</td><td class="num approved">${fmtNum(x.approved)}</td><td class="num approved">${money(x.approvedAmount)}</td><td class="num rejected">${fmtNum(x.rejected)}</td><td class="num rejected">${money(x.rejectedAmount)}</td><td class="num pending">${fmtNum(x.pending)}</td><td class="num pending">${money(x.pendingAmount)}</td></tr>`).join(''):'<tr><td colspan="9" class="report-empty">No SPOC data for this year.</td></tr>';
+}
+function renderDashboardReports(year){renderMonthlySummary(year);renderAuthoritySummary(year);renderSpocSummary(year);}
+
 function renderDash(){
   populateYearFilter();
   populateDashboardFilters();
@@ -1608,6 +1713,7 @@ function renderDash(){
 
   const year=Number(document.getElementById('dash-year').value)||new Date().getFullYear();
   renderDashboardCharts(year,data);
+  renderDashboardReports(year);
 
   const breakdown=document.getElementById('d-authority-breakdown');
   const auths=[...new Set(data.map(r=>r.mgEmail).filter(Boolean))];
