@@ -673,82 +673,85 @@ function getParam(name){
 async function handleEmailAction(){
   const act=getParam('act');
   const id=getParam('id');
+  const idsParam=(getParam('ids')||'').trim();
   const token=(getParam('t')||'').trim();
   const linkAuth=(getParam('a')||'').trim();
-  if(!act||!id) return;
-
-  // Capture ALL query parameters before cleaning the URL.
-  // The previous code cleaned the URL first, which removed t/a and made
-  // every email approval link fail token/authority validation.
+  if(!act||(!id&&!idsParam)) return;
   try{history.replaceState({},document.title,location.origin+location.pathname);}catch(e){}
-
-  // No login needed — the secret token in the link proves this is the
-  // correct authority's email. Verify it before doing anything.
-  await runEmailAction(act, id, token, linkAuth);
+  await runEmailAction(act, id, idsParam, token, linkAuth);
 }
 
-async function runEmailAction(act, id, token, linkAuth){
-  id=String(id||'').trim();
-  // Always pull the freshest data from the Sheet first (multi-user correctness)
+async function runEmailAction(act, id, idsParam, token, linkAuth){
+  const ids=[...(idsParam?idsParam.split(','):id?[id]:[])].map(x=>String(x||'').trim()).filter(Boolean);
+  if(!ids.length)return;
+
+  // One Sheet read for the whole batch. Do not wait/retry here: the request is
+  // already written before the email is sent, so the normal case is immediate.
   await loadRequestsFromSheet(true);
-  let req=reqs.find(r=>String(r.id||'').trim()===id);
-  if(!req){
-    // one retry in case the Sheet was still syncing
-    await new Promise(r=>setTimeout(r,1200));
-    await loadRequestsFromSheet(true);
-    req=reqs.find(r=>String(r.id||'').trim()===id);
-  }
-  if(!req){
-    showActionPopup('error',`Request ${id} not found. It may have been deleted, or the Sheet is still syncing — please open the link again in a few seconds.`);
+  const found=ids.map(x=>reqs.find(r=>String(r.id||'').trim()===x)).filter(Boolean);
+  const missing=ids.filter(x=>!reqs.some(r=>String(r.id||'').trim()===x));
+  if(missing.length){
+    showActionPopup('error',`Request(s) ${escapeHtml(missing.join(', '))} could not be found in the Sheet. Please open the email again after the Sheet finishes syncing.`);
     return;
   }
-  if(req.status && req.status!=='Pending'){
-    const who=mgrNames[req.mgEmail]||req.mgEmail||'the assigned authority';
-    showActionPopup('info',`Request ${id} is already ${String(req.status).toUpperCase()} by ${escapeHtml(who)}. The opposite action is blocked.`);
-    return;
-  }
-  // Verify using the authority email carried in the link (param 'a') plus the
-  // secret token. This proves the link came from the email we sent to that
-  // authority — without needing a login or a Sheet round-trip on the email.
+  const reqsToAct=found;
+  const first=reqsToAct[0];
+  const assigned=(first.mgEmail||'').trim().toLowerCase();
   linkAuth=String(linkAuth||'').trim().toLowerCase();
   token=String(token||'').trim();
-  const tokenValid = !!linkAuth && (token===actionToken(id, linkAuth));
 
-  // The authority in the link must actually be the request's assigned authority
-  // (or Admin). This stops anyone from swapping in a different email.
-  const assigned=(req.mgEmail||'').trim().toLowerCase();
-  // Department authority rule: NACH must always be Imran Abdul.
-  if(String(req.dept||'').trim().toLowerCase()==='nach' && assigned!=='imran.abdul@grayquest.com'){
-    showActionPopup('error',`Security check failed: NACH requests must be assigned to Imran Abdul. Request ${id} was not actioned.`);
-    return;
-  }
-  const allowedForThisReq=[assigned];
-  if(assigned==='neel_aamir'){ allowedForThisReq.push('neel.savla@grayquest.com','aamir.khan@grayquest.com'); }
-  ADMIN_EMAILS.forEach(a=>allowedForThisReq.push(String(a).toLowerCase()));
-  const authorityAllowed = allowedForThisReq.indexOf(linkAuth)!==-1;
-
-  if(!tokenValid || !authorityAllowed){
-    const reason = !linkAuth ? 'No authority in link (old email — please raise a NEW request).'
-                 : !tokenValid ? 'Token mismatch (old email or link altered — raise a NEW request).'
-                 : 'Authority in link is not the assigned approver for this request.';
-    const diag=`<div style="text-align:left;font-size:11px;color:#888;margin-top:10px;background:#f8f8f8;border-radius:6px;padding:8px;word-break:break-all">
-      <b>Why:</b> ${reason}<br><br>
-      link&nbsp;auth&nbsp;(a): ${linkAuth||'(missing)'}<br>
-      assigned&nbsp;(sheet): ${assigned||'(missing)'}<br>
-      token&nbsp;valid: ${tokenValid}<br>
-      authority&nbsp;allowed: ${authorityAllowed}
-    </div>`;
-    showActionPopup('error',`This approval link is invalid or not authorised for request ${id}.${diag}`);
+  const expectedToken=actionToken('BATCH|'+ids.join(','),linkAuth);
+  const legacySingleToken=ids.length===1 ? actionToken(ids[0],linkAuth) : '';
+  const tokenValid=token===expectedToken || (ids.length===1 && token===legacySingleToken);
+  const authorityAllowed=reqsToAct.every(r=>{
+    const a=String(r.mgEmail||'').trim().toLowerCase();
+    if(String(r.dept||'').trim().toLowerCase()==='nach' && a!=='imran.abdul@grayquest.com')return false;
+    const allowed=[a];
+    if(a==='neel_aamir')allowed.push('neel.savla@grayquest.com','aamir.khan@grayquest.com');
+    ADMIN_EMAILS.forEach(x=>allowed.push(String(x).toLowerCase()));
+    return allowed.includes(linkAuth);
+  });
+  if(!tokenValid||!authorityAllowed){
+    showActionPopup('error','This approval link is invalid or not authorised for these requests. Please use the latest approval email.');
     return;
   }
 
-  // Token is valid — process the action directly from the email
+  const pending=reqsToAct.filter(r=>!r.status||r.status==='Pending');
+  if(!pending.length){
+    showActionPopup('info',`All ${reqsToAct.length} request(s) are already finalised. No further action is allowed.`);
+    return;
+  }
   if(act==='approve'){
-    await finalizeInAppAction(req,'Approved','');
-    showActionPopup('approved',`Request ${id} has been APPROVED. A confirmation email has been sent to the requester.`);
-  } else if(act==='reject'){
-    promptRejectComment(req,'email');
+    await finalizeBatchInAppAction(pending,'Approved','');
+    showActionPopup('approved',`${pending.length} request(s) have been APPROVED together. A confirmation email has been sent to the requester.`);
+  }else if(act==='reject'){
+    promptRejectBatchComment(pending,'email');
   }
+}
+
+function promptRejectBatchComment(reqList,source){
+  const ids=reqList.map(r=>r.id).join(', ');
+  const modal=document.createElement('div');
+  modal.className='modal-ov';modal.id='reject-modal';
+  modal.innerHTML=`
+    <div class="modal-box" style="text-align:left">
+      <div style="font-size:16px;font-weight:700;color:#111;margin-bottom:6px">Reject ${reqList.length} Requests</div>
+      <div style="font-size:12px;color:#888;margin-bottom:12px">${escapeHtml(ids)}</div>
+      <label style="font-size:11px;font-weight:600;color:#dc2626;text-transform:uppercase">Rejection Reason (mandatory)</label>
+      <textarea id="reject-comment-input" placeholder="Enter one rejection reason for the selected requests..." style="width:100%;margin-top:6px;min-height:80px"></textarea>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button onclick="document.getElementById('reject-modal').remove()" style="flex:1;background:#f0f0ec;border:none;border-radius:8px;padding:9px;font-size:13px;cursor:pointer;font-weight:600">Cancel</button>
+        <button id="reject-confirm-btn" style="flex:1;background:#dc2626;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;cursor:pointer;font-weight:700">Confirm Reject All</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('reject-confirm-btn').onclick=async()=>{
+    const comment=document.getElementById('reject-comment-input').value.trim();
+    if(!comment){alert('Rejection reason is required.');return;}
+    document.getElementById('reject-modal').remove();
+    await finalizeBatchInAppAction(reqList,'Rejected',comment);
+    showActionPopup('approved',`${reqList.length} request(s) have been REJECTED together.`);
+  };
 }
 
 function showActionPopup(type,msg){
@@ -1081,49 +1084,64 @@ function promptRejectComment(req,source){
 }
 
 async function finalizeInAppAction(req,action,comment){
-  const key=String(req.id||'')+'|'+action;
-  if(processingActions.has(key))return;
-  if(req.status && req.status!=='Pending'){
-    showActionPopup('info',`Request ${req.id} is already ${String(req.status).toLowerCase()}. No further action is allowed.`);
-    return;
-  }
-  processingActions.add(key);
-  const originalStatus=req.status;
-  req.status=action;
-  req.actionDate=new Date().toLocaleString('en-IN');
-  if(action==='Rejected')req.rejectComment=comment;
+  await finalizeBatchInAppAction([req],action,comment);
+}
+
+async function finalizeBatchInAppAction(reqList,action,comment){
+  const pending=reqList.filter(r=>r && (!r.status||r.status==='Pending'));
+  if(!pending.length)return;
+  const actionKey=pending.map(r=>r.id).join('|')+'|'+action;
+  if(processingActions.has(actionKey))return;
+  processingActions.add(actionKey);
+
+  const now=new Date().toLocaleString('en-IN');
+  pending.forEach(req=>{
+    req.status=action;
+    req.actionDate=now;
+    if(action==='Rejected')req.rejectComment=comment;
+  });
   save();
-  renderReqs();
-  updStats();
-  updBadge();
+  renderReqs();updStats();updBadge();
 
   const toast=document.getElementById('mgr-toast');
-  if(toast){toast.className='toast';toast.style.background='#fffbeb';toast.style.color='#92680b';toast.style.border='1px solid #f3d77a';toast.style.display='block';toast.textContent=`Recording ${action.toLowerCase()} for ${req.id}…`;}
+  if(toast){toast.className='toast';toast.style.background='#fffbeb';toast.style.color='#92680b';toast.style.border='1px solid #f3d77a';toast.style.display='block';toast.textContent=`Recording ${action.toLowerCase()} for ${pending.length} request(s)…`;}
 
-  const okSheet=await syncSheetStatus(req.id,action,req.actionDate,comment);
-
-  const subject=`Loan Closure Approval – App ID ${req.appId}`;
-  const {html, plain}=buildStatusEmail(req, action, comment);
-  // Final decision email goes directly to the person who raised the request.
-  // The approval authority is NOT copied on the result email.
-  // Optional CC selected by the requester is preserved.
-  const toAddr=String(req.spoc||'').trim();
-  const ccList=String(req.ccEmail||'').trim();
-  sendGmail(toAddr,ccList,subject,html,plain,null,'App ID '+req.appId);
-
-  processingActions.delete(key);
-  if(toast){
-    if(okSheet){toast.style.background='#f0fdf4';toast.style.color='#15803d';toast.style.border='1px solid #bbf7d0';toast.textContent=`✓ ${req.id} ${action.toLowerCase()} — Sheet updated & email sent.`;}
-    else{
-      req.status=originalStatus;
-      if(action==='Rejected')req.rejectComment='';
-      save();
-      renderReqs(); updStats(); updBadge();
-      toast.style.background='#fef2f2';toast.style.color='#dc2626';toast.style.border='1px solid #fecaca';
-      toast.textContent=`${req.id} was NOT finalised because the Sheet update failed. Please refresh and retry.`;
-    }
-    setTimeout(()=>{toast.style.display='none';},6000);
+  // Run Sheet updates in parallel instead of one after another.
+  const sheetResults=await Promise.all(pending.map(req=>syncSheetStatus(req.id,action,req.actionDate,comment)));
+  const okSheet=sheetResults.every(Boolean);
+  if(!okSheet){
+    pending.forEach(req=>{req.status='Pending';req.actionDate='';if(action==='Rejected')req.rejectComment='';});
+    save();renderReqs();updStats();updBadge();processingActions.delete(actionKey);
+    if(toast){toast.style.background='#fef2f2';toast.style.color='#dc2626';toast.style.border='1px solid #fecaca';toast.textContent=`The Sheet update failed. No request was finalised. Please retry.`;}
+    return false;
   }
+
+  // One confirmation email for the whole batch, not one email per App ID.
+  const subject=pending.length===1
+    ? `Loan Closure Request ${action} – App ID ${pending[0].appId}`
+    : `Loan Closure Requests ${action} – ${pending.length} App IDs`;
+  const {html,plain}=buildBatchStatusEmail(pending,action,comment);
+  const toAddr=String(pending[0].spoc||'').trim();
+  const ccList=String(pending[0].ccEmail||'').trim();
+  await sendGmail(toAddr,ccList,subject,html,plain,null,'Batch '+pending.map(r=>r.id).join(','));
+
+  processingActions.delete(actionKey);
+  if(toast){toast.style.background='#f0fdf4';toast.style.color='#15803d';toast.style.border='1px solid #bbf7d0';toast.textContent=`✓ ${pending.length} request(s) ${action.toLowerCase()} — Sheet updated & confirmation email sent.`;setTimeout(()=>{toast.style.display='none';},6000);}
+  return true;
+}
+
+function buildBatchStatusEmail(reqList,action,comment){
+  const isApp=action==='Approved', color=isApp?'#15803d':'#dc2626';
+  const total=reqList.reduce((s,r)=>s+Number(r.amt||0),0);
+  const rows=reqList.map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.id)}</td><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.appId)}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:right">₹${Number(r.amt||0).toLocaleString('en-IN')}</td></tr>`).join('');
+  const html=`<div style="font-family:Arial,sans-serif;max-width:680px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
+    <div style="background:${color};color:#fff;padding:18px 24px"><h2 style="margin:0;font-size:18px">Loan Closure Requests ${action}</h2><p style="margin:4px 0 0;font-size:13px;opacity:.9">${reqList.length} request(s)</p></div>
+    <div style="padding:24px;background:#fff"><p style="font-size:14px;color:#333">${reqList.length} loan closure request(s) have been <b>${action.toUpperCase()}</b> by <b>${escapeHtml(mgrNames[reqList[0].mgEmail]||reqList[0].mgEmail)}</b>.</p>
+    <p style="font-size:13px;color:#666">Total Amount: <b style="color:${color}">₹${total.toLocaleString('en-IN')}</b></p>
+    <table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="background:#f7f7f5"><th style="padding:7px;text-align:left">Request</th><th style="padding:7px;text-align:left">App ID</th><th style="padding:7px;text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table>
+    ${comment?`<p style="font-size:13px;color:#dc2626;margin-top:16px"><b>Rejection Reason:</b> ${escapeHtml(comment)}</p>`:''}</div></div>`;
+  const plain=`${reqList.length} request(s) have been ${action}.\n\n${reqList.map(r=>r.id+' | App ID '+r.appId+' | ₹'+r.amt).join('\n')}\n\nTotal Amount: ₹${total}\n${comment?'Rejection Reason: '+comment:''}`;
+  return {html,plain};
 }
 
 function buildStatusEmail(req,action,comment){
@@ -1212,12 +1230,11 @@ async function raise(){
   const requestIds=createdRequests.map(r=>r.id).join(', ');
   const siteUrl=location.origin+location.pathname;
   const authParam=encodeURIComponent(mgEmail);
-  const requestActionRows=createdRequests.map(r=>{
-    const tok=actionToken(r.id,mgEmail);
-    const approveLink=`${siteUrl}?act=approve&id=${encodeURIComponent(r.id)}&a=${authParam}&t=${tok}`;
-    const rejectLink=`${siteUrl}?act=reject&id=${encodeURIComponent(r.id)}&a=${authParam}&t=${tok}`;
-    return `<tr><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.id)}</td><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.appId)}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:right">₹${r.amt.toLocaleString('en-IN')}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:center"><a href="${approveLink}" style="color:#16a34a;font-weight:700;text-decoration:none">APPROVE</a> &nbsp; <a href="${rejectLink}" style="color:#dc2626;font-weight:700;text-decoration:none">REJECT</a></td></tr>`;
-  }).join('');
+  const batchToken=actionToken('BATCH|'+requestIds,mgEmail);
+  const idsParam=encodeURIComponent(requestIds);
+  const approveLink=`${siteUrl}?act=approve&ids=${idsParam}&a=${authParam}&t=${batchToken}`;
+  const rejectLink=`${siteUrl}?act=reject&ids=${idsParam}&a=${authParam}&t=${batchToken}`;
+  const requestRows=createdRequests.map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.id)}</td><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.appId)}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:right">₹${r.amt.toLocaleString('en-IN')}</td></tr>`).join('');
   const subject=createdRequests.length===1
     ? `Loan Closure Approval – App ID ${firstReq.appId}`
     : `Loan Closure Approval – ${createdRequests.length} App IDs (${firstReq.id} to ${createdRequests[createdRequests.length-1].id})`;
@@ -1238,8 +1255,9 @@ async function raise(){
         <tr><td style="padding:6px 0;color:#888">Approval Authority:</td><td><b>${escapeHtml(mgrNames[mgEmail]||mgEmail)}</b></td></tr>
         <tr><td style="padding:6px 0;color:#888">Remarks:</td><td>${escapeHtml(rmk)}</td></tr>
       </table>
-      <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:12px"><thead><tr style="background:#f7f7f5"><th style="padding:7px;text-align:left">Request</th><th style="padding:7px;text-align:left">App ID</th><th style="padding:7px;text-align:right">Amount</th><th style="padding:7px;text-align:center">Action</th></tr></thead><tbody>${requestActionRows}</tbody></table>
-      <p style="font-size:11px;color:#aaa;text-align:center;margin:14px 0 0">Each Excel row is stored individually in the Google Sheet. Duplicate App IDs are allowed.</p>
+      <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:12px"><thead><tr style="background:#f7f7f5"><th style="padding:7px;text-align:left">Request</th><th style="padding:7px;text-align:left">App ID</th><th style="padding:7px;text-align:right">Amount</th></tr></thead><tbody>${requestRows}</tbody></table>
+      <div style="text-align:center;margin:20px 0 8px"><a href="${approveLink}" style="display:inline-block;background:#16a34a;color:#fff;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:700;margin-right:8px">✓ APPROVE ALL (${createdRequests.length})</a><a href="${rejectLink}" style="display:inline-block;background:#dc2626;color:#fff;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:700">✕ REJECT ALL (${createdRequests.length})</a></div>
+      <p style="font-size:11px;color:#777;text-align:center;margin:14px 0 0">One action applies to all requests in this email. Each Excel row is stored individually in the Google Sheet. Duplicate App IDs are allowed.</p>
     </div>
   </div>`;
   const textBody=`Approval Requests: ${requestIds}\n\nApp ID / Amount:\n${createdRequests.map(r=>r.appId+' — ₹'+r.amt).join('\n')}\n\nTotal Amount: ₹${totalAmount}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
