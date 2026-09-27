@@ -656,6 +656,8 @@ async function loadRequestsFromSheet(silent){
       renderReqs();
       updStats();
       updBadge();
+      const dash=document.getElementById('p-dash');
+      if(dash && dash.classList.contains('active')) renderDash();
       isLoadingReqs=false;
       return true;
     }
@@ -1151,21 +1153,150 @@ let dashFStatus='Pending';
 let chartMonthly=null, chartAmount=null, chartStatus=null, chartAuthority=null;
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+function getRequestYear(r){
+  const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  return m?Number(m[3]):null;
+}
+
 function populateYearFilter(){
   const sel=document.getElementById('dash-year');
   const curYear=new Date().getFullYear();
-  sel.innerHTML=`<option value="${curYear}">${curYear}</option>`;
+  const years=[...new Set(reqs.map(getRequestYear).filter(Boolean))].sort((a,b)=>b-a);
+  if(!years.includes(curYear)) years.unshift(curYear);
+  const previous=sel.value;
+  sel.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  if(years.includes(Number(previous))) sel.value=previous;
 }
 function dashFilter(v){dashFStatus=v;renderDash();}
 function destroyChart(c){if(c){try{c.destroy();}catch(e){}}}
 
+// Lightweight native canvas charts. This avoids the dashboard becoming blank
+// when the external Chart.js asset is unavailable on GitHub Pages.
+function setupCanvas(id){
+  const canvas=document.getElementById(id);
+  if(!canvas)return null;
+  const box=canvas.parentElement;
+  const dpr=window.devicePixelRatio||1;
+  const w=Math.max(260,box.clientWidth||canvas.clientWidth||400);
+  const h=Math.max(180,box.clientHeight||200);
+  canvas.width=Math.round(w*dpr);
+  canvas.height=Math.round(h*dpr);
+  canvas.style.width=w+'px';
+  canvas.style.height=h+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {canvas,ctx,w,h};
+}
+function clearCanvas(c){
+  if(!c)return;
+  c.ctx.clearRect(0,0,c.w,c.h);
+  c.ctx.font='11px Inter, Arial, sans-serif';
+  c.ctx.fillStyle='#777';
+}
+function drawEmptyChart(id,msg){
+  const c=setupCanvas(id); if(!c)return;
+  clearCanvas(c);
+  c.ctx.textAlign='center'; c.ctx.textBaseline='middle'; c.ctx.fillStyle='#aaa';
+  c.ctx.font='12px Inter, Arial, sans-serif';
+  c.ctx.fillText(msg,c.w/2,c.h/2);
+}
+function drawBarChart(id,labels,values,opts={}){
+  const c=setupCanvas(id); if(!c)return;
+  clearCanvas(c);
+  const ctx=c.ctx,w=c.w,h=c.h;
+  const pad={l:42,r:12,t:12,b:34};
+  const pw=w-pad.l-pad.r, ph=h-pad.t-pad.b;
+  const max=Math.max(1,...values);
+  ctx.strokeStyle='#e8e8e8'; ctx.lineWidth=1;
+  ctx.fillStyle='#888'; ctx.font='10px Inter, Arial, sans-serif'; ctx.textAlign='right';
+  for(let i=0;i<=4;i++){
+    const y=pad.t+ph-(ph*i/4), v=Math.round(max*i/4);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();
+    ctx.fillText(String(v),pad.l-7,y+3);
+  }
+  const gap=Math.max(5,pw/Math.max(1,labels.length*12));
+  const bw=Math.max(8,(pw-gap*(labels.length+1))/Math.max(1,labels.length));
+  labels.forEach((lab,i)=>{
+    const x=pad.l+gap+i*(bw+gap);
+    const bh=(values[i]/max)*ph;
+    ctx.fillStyle=opts.barColor||'#5b7be8';
+    ctx.fillRect(x,pad.t+ph-bh,bw,bh);
+    ctx.fillStyle='#777'; ctx.font='9px Inter, Arial, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(lab,x+bw/2,h-12);
+    if(values[i]>0){ctx.fillStyle='#555';ctx.font='9px Inter, Arial, sans-serif';ctx.fillText(String(values[i]),x+bw/2,pad.t+ph-bh-5);}
+  });
+}
+function drawMultiBarChart(id,labels,series){
+  const c=setupCanvas(id); if(!c)return;
+  clearCanvas(c);
+  const ctx=c.ctx,w=c.w,h=c.h;
+  const pad={l:38,r:12,t:18,b:34};
+  const pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
+  const max=Math.max(1,...series.flatMap(s=>s.values));
+  ctx.strokeStyle='#e8e8e8';ctx.lineWidth=1;ctx.fillStyle='#888';ctx.font='10px Inter,Arial,sans-serif';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const y=pad.t+ph-(ph*i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillText(String(Math.round(max*i/4)),pad.l-6,y+3);}
+  const groupW=pw/labels.length, barW=Math.max(3,Math.min(16,(groupW-12)/series.length));
+  labels.forEach((lab,i)=>{
+    const start=pad.l+i*groupW+(groupW-(barW*series.length))/2;
+    series.forEach((s,j)=>{const v=s.values[i]||0,bh=(v/max)*ph,x=start+j*barW;ctx.fillStyle=s.color;ctx.fillRect(x,pad.t+ph-bh,Math.max(2,barW-2),bh);});
+    ctx.fillStyle='#777';ctx.font='9px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(lab,pad.l+i*groupW+groupW/2,h-12);
+  });
+  let lx=pad.l;
+  series.forEach(s=>{ctx.fillStyle=s.color;ctx.fillRect(lx,5,8,8);ctx.fillStyle='#777';ctx.font='9px Inter,Arial,sans-serif';ctx.textAlign='left';ctx.fillText(s.name,lx+12,13);lx+=55+s.name.length*5;});
+}
+function drawDoughnut(id,items){
+  const c=setupCanvas(id);if(!c)return;
+  clearCanvas(c);const ctx=c.ctx,w=c.w,h=c.h;
+  const total=items.reduce((s,x)=>s+x.value,0);
+  if(!total){drawEmptyChart(id,'No request data');return;}
+  const cx=w*0.38,cy=h/2,r=Math.min(w,h)*0.31,inner=r*0.58;
+  let a=-Math.PI/2;
+  items.forEach(item=>{
+    const da=(item.value/total)*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,a+da);ctx.closePath();ctx.fillStyle=item.color;ctx.fill();a+=da;
+  });
+  ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#222';ctx.font='700 18px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(total),cx,cy);
+  let y=28;ctx.textAlign='left';ctx.font='11px Inter,Arial,sans-serif';
+  items.forEach(item=>{ctx.fillStyle=item.color;ctx.fillRect(w*0.68,y-7,9,9);ctx.fillStyle='#555';ctx.fillText(`${item.name} (${item.value})`,w*0.68+15,y+1);y+=24;});
+}
+function renderDashboardCharts(year){
+  const yr=Number(year)||new Date().getFullYear();
+  const data=reqs.filter(r=>getRequestYear(r)===yr);
+  const monthly=MONTHS.map((_,i)=>({approved:0,pending:0,rejected:0,amount:0}));
+  data.forEach(r=>{
+    const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if(!m)return; const idx=Number(m[2])-1;if(idx<0||idx>11)return;
+    if(r.status==='Approved'){monthly[idx].approved++;monthly[idx].amount+=Number(r.amt)||0;}
+    else if(r.status==='Pending')monthly[idx].pending++;
+    else if(r.status==='Rejected')monthly[idx].rejected++;
+  });
+  drawMultiBarChart('chart-monthly',MONTHS,[
+    {name:'Approved',values:monthly.map(x=>x.approved),color:'#65a30d'},
+    {name:'Pending',values:monthly.map(x=>x.pending),color:'#d97706'},
+    {name:'Rejected',values:monthly.map(x=>x.rejected),color:'#dc2626'}
+  ]);
+  drawBarChart('chart-amount',MONTHS,monthly.map(x=>x.amount),{barColor:'#5b7be8'});
+  drawDoughnut('chart-status',[
+    {name:'Approved',value:data.filter(r=>r.status==='Approved').length,color:'#65a30d'},
+    {name:'Pending',value:data.filter(r=>r.status==='Pending').length,color:'#d97706'},
+    {name:'Rejected',value:data.filter(r=>r.status==='Rejected').length,color:'#dc2626'}
+  ]);
+  const authItems=Object.entries(mgrNames).filter(([k])=>k!=='neel_aamir').map(([email,name])=>({name:name.split(' ')[0],value:data.filter(r=>r.mgEmail===email).length}));
+  drawBarChart('chart-authority',authItems.map(x=>x.name),authItems.map(x=>x.value),{barColor:'#007FFF'});
+}
+
 function renderDash(){
+  populateYearFilter();
   const approved=reqs.filter(r=>r.status==='Approved');
   const pending=reqs.filter(r=>r.status==='Pending');
   document.getElementById('d-total').textContent=reqs.length;
   document.getElementById('d-pending').textContent=pending.length;
   document.getElementById('d-approved').textContent=approved.length;
-  document.getElementById('d-amt').textContent='₹'+approved.reduce((s,r)=>s+r.amt,0).toLocaleString('en-IN');
+  document.getElementById('d-amt').textContent='₹'+approved.reduce((s,r)=>s+(Number(r.amt)||0),0).toLocaleString('en-IN');
+
+  const year=Number(document.getElementById('dash-year').value)||new Date().getFullYear();
+  renderDashboardCharts(year);
 
   const breakdown=document.getElementById('d-authority-breakdown');
   breakdown.innerHTML=Object.entries(mgrNames).filter(([k])=>k!=='neel_aamir').map(([email,name])=>{
@@ -1192,12 +1323,19 @@ function renderDash(){
       </div>
       <div class="cmeta">
         <div><div class="ml">NBFC</div><div class="mv">${r.nbfc}</div></div>
-        <div><div class="ml">Amount</div><div class="mv amt">₹${r.amt.toLocaleString('en-IN')}</div></div>
+        <div><div class="ml">Amount</div><div class="mv amt">₹${(Number(r.amt)||0).toLocaleString('en-IN')}</div></div>
         <div><div class="ml">Type</div><div class="mv">${r.typ}</div></div>
         <div><div class="ml">Authority</div><div class="mv">${mgrNames[r.mgEmail]||r.mgEmail}</div></div>
       </div>
     </div>`).join('');
 }
+
+window.addEventListener('resize',()=>{
+  const dash=document.getElementById('p-dash');
+  if(dash&&dash.classList.contains('active')){
+    renderDashboardCharts(Number(document.getElementById('dash-year')?.value)||new Date().getFullYear());
+  }
+});
 </script>
 
 </body></html>
