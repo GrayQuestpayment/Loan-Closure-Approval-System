@@ -700,8 +700,13 @@ async function runEmailAction(act, id, idsParam, token, linkAuth){
   linkAuth=String(linkAuth||'').trim().toLowerCase();
   token=String(token||'').trim();
 
-  const expectedToken=actionToken('BATCH|'+ids.join(','),linkAuth);
-  const legacySingleToken=ids.length===1 ? actionToken(ids[0],linkAuth) : '';
+  // The email link may contain spaces after commas (for display), while the
+  // parser trims each ID. Always validate against the normalized ID list so
+  // the token generated when the email is sent matches the token received
+  // from the URL.
+  const normalizedIds=ids.map(x=>String(x).trim()).filter(Boolean);
+  const expectedToken=actionToken('BATCH|'+normalizedIds.join(','),linkAuth);
+  const legacySingleToken=normalizedIds.length===1 ? actionToken(normalizedIds[0],linkAuth) : '';
   const tokenValid=token===expectedToken || (ids.length===1 && token===legacySingleToken);
   const authorityAllowed=reqsToAct.every(r=>{
     const a=String(r.mgEmail||'').trim().toLowerCase();
@@ -1228,10 +1233,11 @@ async function raise(){
 
   const firstReq=createdRequests[0];
   const requestIds=createdRequests.map(r=>r.id).join(', ');
+  const canonicalRequestIds=createdRequests.map(r=>r.id).join(',');
   const siteUrl=location.origin+location.pathname;
   const authParam=encodeURIComponent(mgEmail);
-  const batchToken=actionToken('BATCH|'+requestIds,mgEmail);
-  const idsParam=encodeURIComponent(requestIds);
+  const batchToken=actionToken('BATCH|'+canonicalRequestIds,mgEmail);
+  const idsParam=encodeURIComponent(canonicalRequestIds);
   const approveLink=`${siteUrl}?act=approve&ids=${idsParam}&a=${authParam}&t=${batchToken}`;
   const rejectLink=`${siteUrl}?act=reject&ids=${idsParam}&a=${authParam}&t=${batchToken}`;
   const requestRows=createdRequests.map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.id)}</td><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.appId)}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:right">₹${r.amt.toLocaleString('en-IN')}</td></tr>`).join('');
