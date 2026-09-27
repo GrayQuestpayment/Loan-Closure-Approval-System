@@ -194,6 +194,7 @@ textarea{resize:vertical;min-height:90px}
           <option value="finance.communication@grayquest.com">GQ Finance Communication — finance.communication@grayquest.com</option>
           <option value="garvit@grayquest.com">Garvit Mathur — garvit@grayquest.com</option>
           <option value="aashi.mehta@grayquest.com">Aashi Mehta — aashi.mehta@grayquest.com</option>
+          <option value="imran.abdul@grayquest.com">Imran Abdul — imran.abdul@grayquest.com</option>
         </select>
       </div>
       <div class="fg"><label>Your Email (CC)</label>
@@ -236,7 +237,7 @@ textarea{resize:vertical;min-height:90px}
         <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Your Name</label>
         <select id="login-email" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box">
           <option value="">Select your name</option>
-        <option value="aamir.khan@grayquest.com">Aamir Khan</option><option value="neel.savla@grayquest.com">Neel Savla</option><option value="sakshee.thanekar@grayquest.com">Sakshee Thanekar</option><option value="ranjeet@grayquest.com">Ranjeet Singh Rawat</option><option value="finance.communication@grayquest.com">GQ Finance Communication</option><option value="garvit@grayquest.com">Garvit Mathur</option><option value="aashi.mehta@grayquest.com">Aashi Mehta</option></select>
+        <option value="aamir.khan@grayquest.com">Aamir Khan</option><option value="neel.savla@grayquest.com">Neel Savla</option><option value="sakshee.thanekar@grayquest.com">Sakshee Thanekar</option><option value="ranjeet@grayquest.com">Ranjeet Singh Rawat</option><option value="finance.communication@grayquest.com">GQ Finance Communication</option><option value="garvit@grayquest.com">Garvit Mathur</option><option value="aashi.mehta@grayquest.com">Aashi Mehta</option><option value="imran.abdul@grayquest.com">Imran Abdul</option></select>
 
         <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Password</label>
         <input id="login-pw" type="password" placeholder="Enter your password" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;box-sizing:border-box" onkeydown="if(event.key===&#39;Enter&#39;)doPasswordLogin()">
@@ -244,7 +245,7 @@ textarea{resize:vertical;min-height:90px}
         <button onclick="doPasswordLogin()" style="width:100%;background:#007FFF;color:#fff;border:none;border-radius:999px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Log In</button>
       </div>
 
-      <div style="font-size:11px;color:#aaa;margin-top:14px">Registered authorities: Aamir Khan · Neel Savla · Sakshee Thanekar · Ranjeet Singh Rawat · Finance Communication · Garvit Mathur · Aashi Mehta</div>
+      <div style="font-size:11px;color:#aaa;margin-top:14px">Registered authorities: Aamir Khan · Neel Savla · Sakshee Thanekar · Ranjeet Singh Rawat · Finance Communication · Garvit Mathur · Aashi Mehta · Imran Abdul</div>
     </div>
   </div>
 
@@ -396,7 +397,8 @@ const mgrNames={
   'ranjeet@grayquest.com'              :'Ranjeet Singh Rawat',
   'finance.communication@grayquest.com':'GQ Finance Communication',
   'garvit@grayquest.com'               :'Garvit Mathur',
-  'aashi.mehta@grayquest.com'          :'Aashi Mehta'
+  'aashi.mehta@grayquest.com'          :'Aashi Mehta',
+  'imran.abdul@grayquest.com'          :'Imran Abdul'
 };
 
 const deptToAuthority={
@@ -520,16 +522,21 @@ function getParam(name){
 async function handleEmailAction(){
   const act=getParam('act');
   const id=getParam('id');
+  const token=(getParam('t')||'').trim();
+  const linkAuth=(getParam('a')||'').trim();
   if(!act||!id) return;
-  // clean the URL so a refresh doesn't re-trigger
+
+  // Capture ALL query parameters before cleaning the URL.
+  // The previous code cleaned the URL first, which removed t/a and made
+  // every email approval link fail token/authority validation.
   try{history.replaceState({},document.title,location.origin+location.pathname);}catch(e){}
 
   // No login needed — the secret token in the link proves this is the
   // correct authority's email. Verify it before doing anything.
-  await runEmailAction(act, id, (getParam('t')||'').trim());
+  await runEmailAction(act, id, token, linkAuth);
 }
 
-async function runEmailAction(act, id, token){
+async function runEmailAction(act, id, token, linkAuth){
   id=String(id||'').trim();
   // Always pull the freshest data from the Sheet first (multi-user correctness)
   await loadRequestsFromSheet(true);
@@ -551,8 +558,9 @@ async function runEmailAction(act, id, token){
   // Verify using the authority email carried in the link (param 'a') plus the
   // secret token. This proves the link came from the email we sent to that
   // authority — without needing a login or a Sheet round-trip on the email.
-  const linkAuth=(getParam('a')||'').trim().toLowerCase();
-  const tokenValid = linkAuth && (token===actionToken(id, linkAuth));
+  linkAuth=String(linkAuth||'').trim().toLowerCase();
+  token=String(token||'').trim();
+  const tokenValid = !!linkAuth && (token===actionToken(id, linkAuth));
 
   // The authority in the link must actually be the request's assigned authority
   // (or Admin). This stops anyone from swapping in a different email.
@@ -681,7 +689,8 @@ const AUTHORITY_DEFAULTS={
   'ranjeet@grayquest.com'              :{name:'Ranjeet Singh Rawat',        pw:'Ranjeet@8354'},
   'finance.communication@grayquest.com':{name:'GQ Finance Communication',   pw:'Finance@2609'},
   'garvit@grayquest.com'               :{name:'Garvit Mathur',              pw:'Garvit@5473'},
-  'aashi.mehta@grayquest.com'          :{name:'Aashi Mehta',                pw:'Aashi@777'}
+  'aashi.mehta@grayquest.com'          :{name:'Aashi Mehta',                pw:'Aashi@777'},
+  'imran.abdul@grayquest.com'          :{name:'Imran Abdul',                pw:'Imran@2026'}
 };
 
 let authPasswords={};
@@ -1030,7 +1039,7 @@ async function raise(){
           <a href="${rejectLink}" style="display:block;background:#dc2626;color:#ffffff;text-decoration:none;padding:14px 0;border-radius:8px;font-size:15px;font-weight:700;text-align:center">✕ REJECT</a>
         </td>
       </tr></table>
-      <p style="font-size:11px;color:#aaa;text-align:center;margin:14px 0 0">Tapping a button opens the approval portal. You may be asked to log in first. Reject will ask for a mandatory reason.</p>
+      <p style="font-size:11px;color:#aaa;text-align:center;margin:14px 0 0">Tapping APPROVE completes the approval directly from this authorised email link. REJECT opens the portal and requires a mandatory reason.</p>
     </div>
   </div>`;
   const textBody=`Approval Request: ${reqId}\nApp ID: ${newReq.appId}\nAmount: ₹${amt}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
