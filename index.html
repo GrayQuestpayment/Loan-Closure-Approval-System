@@ -685,11 +685,16 @@ async function runEmailAction(act, id, idsParam, token, linkAuth){
   const ids=[...(idsParam?idsParam.split(','):id?[id]:[])].map(x=>String(x||'').trim()).filter(Boolean);
   if(!ids.length)return;
 
-  // One Sheet read for the whole batch. Do not wait/retry here: the request is
-  // already written before the email is sent, so the normal case is immediate.
-  await loadRequestsFromSheet(true);
-  const found=ids.map(x=>reqs.find(r=>String(r.id||'').trim()===x)).filter(Boolean);
-  const missing=ids.filter(x=>!reqs.some(r=>String(r.id||'').trim()===x));
+  // Use local data immediately when available. Only hit the Sheet when one
+  // or more requests are missing locally; this removes an unnecessary network
+  // round-trip for actions opened in the same browser/session.
+  let found=ids.map(x=>reqs.find(r=>String(r.id||'').trim()===x)).filter(Boolean);
+  let missing=ids.filter(x=>!reqs.some(r=>String(r.id||'').trim()===x));
+  if(missing.length){
+    await loadRequestsFromSheet(true);
+    found=ids.map(x=>reqs.find(r=>String(r.id||'').trim()===x)).filter(Boolean);
+    missing=ids.filter(x=>!reqs.some(r=>String(r.id||'').trim()===x));
+  }
   if(missing.length){
     showActionPopup('error',`Request(s) ${escapeHtml(missing.join(', '))} could not be found in the Sheet. Please open the email again after the Sheet finishes syncing.`);
     return;
@@ -1126,12 +1131,18 @@ async function finalizeBatchInAppAction(reqList,action,comment){
     ? `Loan Closure Request ${action} – App ID ${pending[0].appId}`
     : `Loan Closure Requests ${action} – ${pending.length} App IDs`;
   const {html,plain}=buildBatchStatusEmail(pending,action,comment);
-  const toAddr=String(pending[0].spoc||'').trim();
+  // Reply on the SAME approval email/thread that the authority originally
+  // received. Do not send the confirmation as a new mail to the requester.
+  const authorityEmail=String(pending[0].mgEmail||'').trim();
   const ccList=String(pending[0].ccEmail||'').trim();
-  await sendGmail(toAddr,ccList,subject,html,plain,null,'Batch '+pending.map(r=>r.id).join(','));
+  const originalThreadKey='App IDs '+pending.map(r=>r.appId).join(', ');
+  const emailSubject=`Re: ${pending.length===1 ? `Loan Closure Approval – App ID ${pending[0].appId}` : `Loan Closure Approval – ${pending.length} App IDs`}`;
+  // Fire the mail after the Sheet is updated, but do not make the UI wait for
+  // Gmail's response. This makes Approve/Reject feel immediate.
+  void sendGmail(authorityEmail,ccList,emailSubject,html,plain,null,originalThreadKey);
 
   processingActions.delete(actionKey);
-  if(toast){toast.style.background='#f0fdf4';toast.style.color='#15803d';toast.style.border='1px solid #bbf7d0';toast.textContent=`✓ ${pending.length} request(s) ${action.toLowerCase()} — Sheet updated & confirmation email sent.`;setTimeout(()=>{toast.style.display='none';},6000);}
+  if(toast){toast.style.background='#f0fdf4';toast.style.color='#15803d';toast.style.border='1px solid #bbf7d0';toast.textContent=`✓ ${pending.length} request(s) ${action.toLowerCase()} — Sheet updated.`;setTimeout(()=>{toast.style.display='none';},6000);}
   return true;
 }
 
@@ -1221,15 +1232,17 @@ async function raise(){
       status:'Pending',hasAttachment:!!appIdFileData,attachmentName:appIdFileData?appIdFileData.name:'',actionDate:'',rejectComment:''
     };
     reqs.push(newReq);
-    save();
     createdRequests.push(newReq);
   }
+  // Write localStorage only once for the whole batch.
+  save();
 
-  // Every Excel row gets its own Google Sheet row. Duplicate App IDs are intentionally allowed.
-  for(const newReq of createdRequests){
+  // Every Excel row gets its own Google Sheet row. Run the network writes in
+  // parallel instead of waiting for each App ID one-by-one.
+  await Promise.all(createdRequests.map(newReq=>{
     const sheetRow=[newReq.id,dateStr,timeStr,newReq.appId,nbfc,newReq.amt,'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,'Pending',appIdFileData?appIdFileData.name:'None','',''];
-    await syncSheet(sheetRow);
-  }
+    return syncSheet(sheetRow);
+  }));
 
   const firstReq=createdRequests[0];
   const requestIds=createdRequests.map(r=>r.id).join(', ');
@@ -1268,7 +1281,9 @@ async function raise(){
   </div>`;
   const textBody=`Approval Requests: ${requestIds}\n\nApp ID / Amount:\n${createdRequests.map(r=>r.appId+' — ₹'+r.amt).join('\n')}\n\nTotal Amount: ₹${totalAmount}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
 
-  await sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, appIdFileData, 'App IDs '+createdRequests.map(r=>r.appId).join(', '));
+  // The approval email already contains every App ID + Amount. Avoid sending
+  // the full Excel base64 payload again; this makes submission much faster.
+  void sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, null, 'App IDs '+createdRequests.map(r=>r.appId).join(', '));
 
   tokOk.textContent=`${createdRequests.length} request(s) submitted successfully! App IDs and their amounts were added to the Sheet, including duplicates.`;
   tokOk.style.display='block';
