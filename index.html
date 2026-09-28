@@ -778,7 +778,7 @@ function showActionPopup(type,msg){
   document.body.appendChild(m);
 }
 
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwERSrj9v4qDpxJz6ApRwuOTZwyU4rpzn4hisXcuAfA3fbKPA3dTh81ExmgZUHSNDWKLw/exec';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbykLzpx-FPHHoy3J7iu4xoXVUP-1k_wq42WT2by79sXuckFr3RHQEjQuBZuMcR2R1YeVg/exec';
 let GAS_URL = (DEFAULT_GAS_URL||'').trim();
 if(!GAS_URL){ try{ GAS_URL = localStorage.getItem('lc_gas_url')||''; }catch(e){} }
 function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
@@ -1239,7 +1239,7 @@ async function raise(){
 
   const firstReq=createdRequests[0];
   const requestIds=createdRequests.map(r=>r.id).join(', ');
-  const approvalThreadKey='App IDs '+createdRequests.map(r=>r.appId).join(', ');
+  const approvalThreadKey='REQUESTS|'+createdRequests.map(r=>r.id).join('|');
   createdRequests.forEach(r=>r.threadKey=approvalThreadKey);
   save();
   const siteUrl=location.origin+location.pathname;
