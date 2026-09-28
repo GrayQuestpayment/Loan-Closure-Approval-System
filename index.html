@@ -778,7 +778,7 @@ function showActionPopup(type,msg){
   document.body.appendChild(m);
 }
 
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbykLzpx-FPHHoy3J7iu4xoXVUP-1k_wq42WT2by79sXuckFr3RHQEjQuBZuMcR2R1YeVg/exec';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbznOMrBips476221tOgev22rWg0EEIfn9IGMHtViGiZZE_XtnE30JN1oB1kIKdflOlt/exec';
 let GAS_URL = (DEFAULT_GAS_URL||'').trim();
 if(!GAS_URL){ try{ GAS_URL = localStorage.getItem('lc_gas_url')||''; }catch(e){} }
 function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
