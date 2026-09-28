@@ -157,7 +157,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
     <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;48&#39; height=&#39;48&#39; viewBox=&#39;0 0 48 48&#39;&gt;&lt;circle cx=&#39;24&#39; cy=&#39;24&#39; r=&#39;24&#39; fill=&#39;%23007FFF&#39;/&gt;&lt;text x=&#39;50%25&#39; y=&#39;55%25&#39; font-size=&#39;20&#39; font-weight=&#39;bold&#39; fill=&#39;white&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; font-family=&#39;Arial&#39;&gt;GQ&lt;/text&gt;&lt;/svg&gt;" alt="GrayQuest" id="gq-logo-header" style="width:48px;height:48px;border-radius:50%;flex-shrink:0">
     <div>
       <h1><i class="ti ti-file-check" style="vertical-align:-3px;margin-right:6px"></i>Loan Closure Approval System</h1>
-      <p>Parent Support · Auto-sync to &nbsp;<a href="https://docs.google.com/spreadsheets/d/1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo/edit" target="_blank" style="color:#007FFF;text-decoration:none;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> &nbsp;·&nbsp; <span id="email-setup-link" class="admin-only" onclick="showSetupModal()" style="color:#b45309;cursor:pointer;font-weight:700;font-size:12px;align-items:center;gap:4px">⚙️ Email Setup</span></p>
+      <p>Parent Support · Auto-sync to &nbsp;<a href="https://docs.google.com/spreadsheets/d/1Z18Szl3I6agGvAnfPKrkxBLG0b8X9sNoobskVPgnRWQ/edit" target="_blank" style="color:#007FFF;text-decoration:none;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> &nbsp;·&nbsp; <span id="email-setup-link" class="admin-only" onclick="showSetupModal()" style="color:#b45309;cursor:pointer;font-weight:700;font-size:12px;align-items:center;gap:4px">⚙️ Email Setup</span></p>
     </div>
   </div>
 
@@ -173,7 +173,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
   <div id="p-raise" class="panel active">
     <div id="tok-ok" class="toast ts"></div>
     <div id="tok-err" class="toast td"></div>
-    <div class="sheet-note"><i class="ti ti-table"></i> On submit, this entry will be appended to your <a href="https://docs.google.com/spreadsheets/d/1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo/edit" target="_blank" style="color:#007FFF;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> and a notification email will be sent via Gmail.</div>
+    <div class="sheet-note"><i class="ti ti-table"></i> On submit, this entry will be appended to your <a href="https://docs.google.com/spreadsheets/d/1Z18Szl3I6agGvAnfPKrkxBLG0b8X9sNoobskVPgnRWQ/edit" target="_blank" style="color:#007FFF;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> and a notification email will be sent via Gmail.</div>
     <div class="form-grid">
       <div class="fg"><label>App ID / Loan ID</label>
         <input type="text" id="appId" placeholder="Single ID e.g. 1549692, or attach Excel below">
@@ -460,7 +460,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
 
 
 <script>
-const SHEET_ID='1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo';
+const SHEET_ID='1Z18Szl3I6agGvAnfPKrkxBLG0b8X9sNoobskVPgnRWQ';
 const SHEET_TAB='Sheet1';
 const SHEET_HEADERS=['Request ID','Date','Time','App ID','NBFC / Lender','Amount','Mode','Type','SPOC','Department / Team','Remarks','Approval Authority (TO)','CC Email','Status','Attachment','Action Date','Reject Reason'];
 let reqs=[],mails=[],fStatus='all',currentIdentity='';
@@ -712,7 +712,6 @@ async function runEmailAction(act, id, idsParam, token, linkAuth){
   const tokenValid=token===expectedToken || (ids.length===1 && token===legacySingleToken);
   const authorityAllowed=reqsToAct.every(r=>{
     const a=String(r.mgEmail||'').trim().toLowerCase();
-    if(String(r.dept||'').trim().toLowerCase()==='nach' && a!=='imran.abdul@grayquest.com')return false;
     const allowed=[a];
     if(a==='neel_aamir')allowed.push('neel.savla@grayquest.com','aamir.khan@grayquest.com');
     ADMIN_EMAILS.forEach(x=>allowed.push(String(x).toLowerCase()));
@@ -721,7 +720,14 @@ async function runEmailAction(act, id, idsParam, token, linkAuth){
   // Authority assignment is authoritative. Accept a token match OR a valid
   // authority assignment so links from previous deployments never break.
   if(!authorityAllowed){
-    showActionPopup('error','This approval link is not authorised for the assigned approval authority.');
+    const assignedList=reqsToAct.map(r=>String(r.mgEmail||'').trim().toLowerCase()).join(', ');
+    const diag=`<div style="text-align:left;font-size:11px;color:#888;margin-top:10px;background:#f8f8f8;border-radius:6px;padding:8px;word-break:break-all">
+      <b>Why it failed:</b> the authority in the email link does not match the request's assigned authority.<br><br>
+      link&nbsp;authority&nbsp;(email): ${escapeHtml(linkAuth||'(missing)')}<br>
+      assigned&nbsp;(from&nbsp;Sheet): ${escapeHtml(assignedList||'(missing)')}<br>
+      admin: ${escapeHtml(ADMIN_EMAILS.join(', '))}
+    </div>`;
+    showActionPopup('error','This approval link is not authorised for the assigned approval authority.'+diag);
     return;
   }
 
