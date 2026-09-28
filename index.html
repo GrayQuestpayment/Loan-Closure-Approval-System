@@ -688,7 +688,7 @@ async function runEmailAction(act, id, idsParam, token, linkAuth){
   // One Sheet read for the whole batch. Do not wait/retry here: the request is
   // already written before the email is sent, so the normal case is immediate.
   await loadRequestsFromSheet(true);
-  const found=ids.map(x=>reqs.find(r=>String(r.id||'').trim()===x)).filter(Boolean);
+  const found=ids.map(x=>{const matches=reqs.filter(r=>String(r.id||'').trim()===x);return matches.length?matches[matches.length-1]:null;}).filter(Boolean);
   const missing=ids.filter(x=>!reqs.some(r=>String(r.id||'').trim()===x));
   if(missing.length){
     showActionPopup('error',`Request(s) ${escapeHtml(missing.join(', '))} could not be found in the Sheet. Please open the email again after the Sheet finishes syncing.`);
@@ -725,9 +725,10 @@ async function runEmailAction(act, id, idsParam, token, linkAuth){
     return;
   }
 
-  const pending=reqsToAct.filter(r=>!r.status||r.status==='Pending');
+  const pending=reqsToAct.filter(r=>String(r.status||'Pending').trim().toLowerCase()==='pending');
   if(!pending.length){
-    showActionPopup('info',`All ${reqsToAct.length} request(s) are already finalised. No further action is allowed.`);
+    const details=reqsToAct.map(r=>`${escapeHtml(r.id)} — ${escapeHtml(r.status||'Finalised')} ${r.actionDate?`on ${escapeHtml(r.actionDate)}`:''}`).join('<br>');
+    showActionPopup('info',`These request(s) have already been finalised and cannot be actioned again:<br><br>${details}<br><br>Please use a new pending approval email for a new request.`);
     return;
   }
   if(act==='approve'){
