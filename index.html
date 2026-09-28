@@ -1133,11 +1133,12 @@ async function finalizeBatchInAppAction(reqList,action,comment){
   const {html,plain}=buildBatchStatusEmail(pending,action,comment);
   const toAddr=String(pending[0].spoc||'').trim();
   const ccList=String(pending[0].ccEmail||'').trim();
-  await sendGmail(toAddr,ccList,subject,html,plain,null,'Batch '+pending.map(r=>r.id).join(','));
+  const replyThreadKey=String(pending[0].threadKey||'').trim() || ('App IDs '+pending.map(r=>r.appId).join(', '));
+  const confirmationSent=await sendGmail(toAddr,ccList,subject,html,plain,null,replyThreadKey);
 
   processingActions.delete(actionKey);
-  if(toast){toast.style.background='#f0fdf4';toast.style.color='#15803d';toast.style.border='1px solid #bbf7d0';toast.textContent=`✓ ${pending.length} request(s) ${action.toLowerCase()} — Sheet updated & confirmation email sent.`;setTimeout(()=>{toast.style.display='none';},6000);}
-  return true;
+  if(toast){toast.style.background=confirmationSent?'#f0fdf4':'#fffbeb';toast.style.color=confirmationSent?'#15803d':'#92680b';toast.style.border=confirmationSent?'1px solid #bbf7d0':'1px solid #f3d77a';toast.style.display='block';toast.textContent=confirmationSent?`✓ ${pending.length} request(s) ${action.toLowerCase()} — confirmation replied in the original approval email.`:`✓ ${pending.length} request(s) ${action.toLowerCase()} — Sheet updated, but confirmation email could not be replied in the original thread.`;setTimeout(()=>{toast.style.display='none';},7000);}
+  return confirmationSent;
 }
 
 function buildBatchStatusEmail(reqList,action,comment){
@@ -1223,7 +1224,7 @@ async function raise(){
     const rowAmount=Number(item.amount);
     const newReq={
       id:reqId,date:dateStr,time:timeStr,appId:item.appId,nbfc,amt:rowAmount,mode:'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,
-      status:'Pending',hasAttachment:!!appIdFileData,attachmentName:appIdFileData?appIdFileData.name:'',actionDate:'',rejectComment:''
+      status:'Pending',hasAttachment:!!appIdFileData,attachmentName:appIdFileData?appIdFileData.name:'',actionDate:'',rejectComment:'',threadKey:''
     };
     reqs.push(newReq);
     save();
@@ -1238,6 +1239,9 @@ async function raise(){
 
   const firstReq=createdRequests[0];
   const requestIds=createdRequests.map(r=>r.id).join(', ');
+  const approvalThreadKey='App IDs '+createdRequests.map(r=>r.appId).join(', ');
+  createdRequests.forEach(r=>r.threadKey=approvalThreadKey);
+  save();
   const siteUrl=location.origin+location.pathname;
   const authParam=encodeURIComponent(mgEmail);
   const batchToken=actionToken('BATCH|'+requestIds,mgEmail);
@@ -1272,7 +1276,7 @@ async function raise(){
   </div>`;
   const textBody=`Approval Requests: ${requestIds}\n\nApp ID / Amount:\n${createdRequests.map(r=>r.appId+' — ₹'+r.amt).join('\n')}\n\nTotal Amount: ₹${totalAmount}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
 
-  await sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, appIdFileData, 'App IDs '+createdRequests.map(r=>r.appId).join(', '));
+  await sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, appIdFileData, approvalThreadKey);
 
   tokOk.textContent=`${createdRequests.length} request(s) submitted successfully! App IDs and their amounts were added to the Sheet, including duplicates.`;
   tokOk.style.display='block';
