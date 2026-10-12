@@ -1282,16 +1282,10 @@ async function raise(){
   </div>`;
   const textBody=`Approval Requests: ${requestIds}\n\nApp ID / Amount:\n${createdRequests.map(r=>r.appId+' — ₹'+r.amt).join('\n')}\n\nTotal Amount: ₹${totalAmount}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
 
-  const emailSent = await sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, appIdFileData, approvalThreadKey);
+  await sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, appIdFileData, approvalThreadKey);
 
-  if(emailSent){
-    tokOk.textContent=`${createdRequests.length} request(s) submitted and approval email sent successfully. App IDs and amounts were added to the Sheet, including duplicates.`;
-    tokOk.style.display='block';
-    tokErr.style.display='none';
-  }else{
-    tokErr.textContent=`${createdRequests.length} request(s) were saved to the Sheet, but the approval email could not be confirmed as sent. Check Apps Script Executions and Mail quota before retrying; do not resubmit the same request.`;
-    tokErr.style.display='block';
-  }
+  tokOk.textContent=`${createdRequests.length} request(s) submitted successfully! App IDs and their amounts were added to the Sheet, including duplicates.`;
+  tokOk.style.display='block';
 
   document.getElementById('appId').value='';
   document.getElementById('amt').value='';
@@ -1306,7 +1300,7 @@ async function raise(){
 async function sendEmail(to, cc, subject, htmlBody, textBody, attachment, threadKey){
   if(!isGASConfigured()) return false;
   try{
-    const payload={action:'sendEmail', to, cc:cc||'', subject, html:htmlBody||'', text:textBody||''};
+    const payload={to, cc:cc||'', subject, html:htmlBody||'', text:textBody||''};
     if(threadKey) payload.threadKey=threadKey;
     if(attachment&&attachment.base64){
       payload.attachment={
@@ -1321,17 +1315,8 @@ async function sendEmail(to, cc, subject, htmlBody, textBody, attachment, thread
       body:JSON.stringify(payload)
     });
     const txt=await res.text();
-    if(!res.ok) return false;
-    try{
-      const data=JSON.parse(txt);
-      if(data && (data.ok===true || data.sent===true || data.status==='SENT' || data.status==='REPLIED')) return true;
-      if(data && (data.ok===false || data.error)) console.error('Apps Script email error:', data.error||data.message||txt);
-    }catch(_){
-      if(/\\bSENT\\b|\\bREPLIED\\b/i.test(txt)) return true;
-    }
-    console.error('Apps Script did not confirm email send:', txt);
-    return false;
-  }catch(e){console.error('Email request failed:',e);return false;}
+    return txt.includes('SENT')||txt.includes('REPLIED')||txt.includes('sent');
+  }catch(e){return false;}
 }
 async function sendGmail(to, cc, subject, htmlBody, textBody, attachment, threadKey){
   return sendEmail(to, cc, subject, htmlBody, textBody, attachment, threadKey);
