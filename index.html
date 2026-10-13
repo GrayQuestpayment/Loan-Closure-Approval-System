@@ -157,7 +157,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
     <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;48&#39; height=&#39;48&#39; viewBox=&#39;0 0 48 48&#39;&gt;&lt;circle cx=&#39;24&#39; cy=&#39;24&#39; r=&#39;24&#39; fill=&#39;%23007FFF&#39;/&gt;&lt;text x=&#39;50%25&#39; y=&#39;55%25&#39; font-size=&#39;20&#39; font-weight=&#39;bold&#39; fill=&#39;white&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; font-family=&#39;Arial&#39;&gt;GQ&lt;/text&gt;&lt;/svg&gt;" alt="GrayQuest" id="gq-logo-header" style="width:48px;height:48px;border-radius:50%;flex-shrink:0">
     <div>
       <h1><i class="ti ti-file-check" style="vertical-align:-3px;margin-right:6px"></i>Loan Closure Approval System</h1>
-      <p>Parent Support · Auto-sync to &nbsp;<a href="https://docs.google.com/spreadsheets/d/1Z18Szl3I6agGvAnfPKrkxBLG0b8X9sNoobskVPgnRWQ/edit" target="_blank" style="color:#007FFF;text-decoration:none;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> &nbsp;·&nbsp; <span id="email-setup-link" class="admin-only" onclick="showSetupModal()" style="color:#b45309;cursor:pointer;font-weight:700;font-size:12px;align-items:center;gap:4px">⚙️ Email Setup</span></p>
+      <p>Parent Support · Auto-sync to &nbsp;<a href="https://docs.google.com/spreadsheets/d/1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo/edit" target="_blank" style="color:#007FFF;text-decoration:none;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> &nbsp;·&nbsp; <span id="email-setup-link" class="admin-only" onclick="showSetupModal()" style="color:#b45309;cursor:pointer;font-weight:700;font-size:12px;align-items:center;gap:4px">⚙️ Email Setup</span></p>
     </div>
   </div>
 
@@ -173,7 +173,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
   <div id="p-raise" class="panel active">
     <div id="tok-ok" class="toast ts"></div>
     <div id="tok-err" class="toast td"></div>
-    <div class="sheet-note"><i class="ti ti-table"></i> On submit, this entry will be appended to your <a href="https://docs.google.com/spreadsheets/d/1Z18Szl3I6agGvAnfPKrkxBLG0b8X9sNoobskVPgnRWQ/edit" target="_blank" style="color:#007FFF;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> and a notification email will be sent via Gmail.</div>
+    <div class="sheet-note"><i class="ti ti-table"></i> On submit, this entry will be appended to your <a href="https://docs.google.com/spreadsheets/d/1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo/edit" target="_blank" style="color:#007FFF;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> and a notification email will be sent via Gmail.</div>
     <div class="form-grid">
       <div class="fg"><label>App ID / Loan ID</label>
         <input type="text" id="appId" placeholder="Single ID e.g. 1549692, or attach Excel below">
@@ -460,7 +460,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
 
 
 <script>
-const SHEET_ID='1Z18Szl3I6agGvAnfPKrkxBLG0b8X9sNoobskVPgnRWQ';
+const SHEET_ID='1hYGh4REPSC7b0wAEMcOEcygLamOxr3c04dGA1MssCoo';
 const SHEET_TAB='Sheet1';
 const SHEET_HEADERS=['Request ID','Date','Time','App ID','NBFC / Lender','Amount','Mode','Type','SPOC','Department / Team','Remarks','Approval Authority (TO)','CC Email','Status','Attachment','Action Date','Reject Reason'];
 let reqs=[],mails=[],fStatus='all',currentIdentity='';
@@ -720,14 +720,7 @@ async function runEmailAction(act, id, idsParam, token, linkAuth){
   // Authority assignment is authoritative. Accept a token match OR a valid
   // authority assignment so links from previous deployments never break.
   if(!authorityAllowed){
-    const assignedList=reqsToAct.map(r=>String(r.mgEmail||'').trim().toLowerCase()).join(', ');
-    const diag=`<div style="text-align:left;font-size:11px;color:#888;margin-top:10px;background:#f8f8f8;border-radius:6px;padding:8px;word-break:break-all">
-      <b>Why it failed:</b> the authority in the email link does not match the request's assigned authority.<br><br>
-      link&nbsp;authority&nbsp;(email): ${escapeHtml(linkAuth||'(missing)')}<br>
-      assigned&nbsp;(from&nbsp;Sheet): ${escapeHtml(assignedList||'(missing)')}<br>
-      admin: ${escapeHtml(ADMIN_EMAILS.join(', '))}
-    </div>`;
-    showActionPopup('error','This approval link is not authorised for the assigned approval authority.'+diag);
+    showActionPopup('error','This approval link is not authorised for the assigned approval authority.');
     return;
   }
 
@@ -1132,15 +1125,15 @@ async function finalizeBatchInAppAction(reqList,action,comment){
     return false;
   }
 
-  // One confirmation email for the whole batch, not one email per App ID.
+  // Confirmation reuses the SAME subject as the original approval email so Gmail
+  // keeps the whole request lifecycle in ONE conversation thread automatically.
   const subject=pending.length===1
-    ? `Loan Closure Request ${action} – App ID ${pending[0].appId}`
-    : `Loan Closure Requests ${action} – ${pending.length} App IDs`;
+    ? `Loan Closure Approval – App ID ${pending[0].appId}`
+    : `Loan Closure Approval – ${pending.length} App IDs (${pending[0].id} to ${pending[pending.length-1].id})`;
   const {html,plain}=buildBatchStatusEmail(pending,action,comment);
   const toAddr=String(pending[0].spoc||'').trim();
   const ccList=String(pending[0].ccEmail||'').trim();
-  const replyThreadKey=String(pending[0].threadKey||'').trim() || ('App IDs '+pending.map(r=>r.appId).join(', '));
-  const confirmationSent=await sendGmail(toAddr,ccList,subject,html,plain,null,replyThreadKey);
+  const confirmationSent=await sendGmail(toAddr,ccList,subject,html,plain,null,null);
 
   processingActions.delete(actionKey);
   if(toast){toast.style.background=confirmationSent?'#f0fdf4':'#fffbeb';toast.style.color=confirmationSent?'#15803d':'#92680b';toast.style.border=confirmationSent?'1px solid #bbf7d0':'1px solid #f3d77a';toast.style.display='block';toast.textContent=confirmationSent?`✓ ${pending.length} request(s) ${action.toLowerCase()} — confirmation replied in the original approval email.`:`✓ ${pending.length} request(s) ${action.toLowerCase()} — Sheet updated, but confirmation email could not be replied in the original thread.`;setTimeout(()=>{toast.style.display='none';},7000);}
@@ -1237,11 +1230,11 @@ async function raise(){
     createdRequests.push(newReq);
   }
 
-  // Every Excel row gets its own Google Sheet row. Duplicate App IDs are intentionally allowed.
-  for(const newReq of createdRequests){
-    const sheetRow=[newReq.id,dateStr,timeStr,newReq.appId,nbfc,newReq.amt,'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,'Pending',appIdFileData?appIdFileData.name:'None','',''];
-    await syncSheet(sheetRow);
-  }
+  // Every Excel row gets its own Google Sheet row. Duplicate App IDs are intentionally
+  // allowed. All rows are sent in ONE request (not a slow per-row loop), so a bulk
+  // upload of many App IDs is appended in a single fast round-trip to Apps Script.
+  const allRows=createdRequests.map(newReq=>[newReq.id,dateStr,timeStr,newReq.appId,nbfc,newReq.amt,'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,'Pending',appIdFileData?appIdFileData.name:'None','','']);
+  await syncSheetBatch(allRows);
 
   const firstReq=createdRequests[0];
   const requestIds=createdRequests.map(r=>r.id).join(', ');
@@ -1282,7 +1275,9 @@ async function raise(){
   </div>`;
   const textBody=`Approval Requests: ${requestIds}\n\nApp ID / Amount:\n${createdRequests.map(r=>r.appId+' — ₹'+r.amt).join('\n')}\n\nTotal Amount: ₹${totalAmount}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
 
-  await sendGmail(mgEmail, ccEmail, subject, htmlBody, textBody, appIdFileData, approvalThreadKey);
+  // Always keep the SPOC (the person who raised it) in CC, merged with any CC they chose.
+  const approvalCc=[ccEmail,spoc].map(x=>String(x||'').trim().toLowerCase()).filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i).join(',');
+  await sendGmail(mgEmail, approvalCc, subject, htmlBody, textBody, appIdFileData, approvalThreadKey);
 
   tokOk.textContent=`${createdRequests.length} request(s) submitted successfully! App IDs and their amounts were added to the Sheet, including duplicates.`;
   tokOk.style.display='block';
@@ -1337,6 +1332,26 @@ async function syncSheet(row){
     }catch(e){sync('Saved locally','ok');}
   } else {
     sync('Saved locally','ok');
+  }
+}
+
+// Append many rows in ONE request (fast bulk upload). Falls back to per-row only if needed.
+async function syncSheetBatch(rows){
+  if(!Array.isArray(rows)||!rows.length)return;
+  sync('Saving to Sheet…','p');
+  if(!isGASConfigured()){ sync('Saved locally','ok'); return; }
+  try{
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'appendSheetBatch',sheetId:SHEET_ID,tab:SHEET_TAB,headers:SHEET_HEADERS,rows})
+    });
+    const txt=await res.text();
+    if(txt.includes('APPENDED')||txt.includes('OK')){ sync('Synced to Sheet ✓','ok'); return; }
+    // If the backend doesn't know appendSheetBatch yet, fall back to per-row append.
+    for(const row of rows){ await syncSheet(row); }
+  }catch(e){
+    for(const row of rows){ await syncSheet(row); }
   }
 }
 
