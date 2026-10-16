@@ -466,7 +466,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
 /* ==========================================================
  * CONFIG
  * ========================================================== */
-const DEFAULT_GAS='https://script.google.com/macros/s/AKfycbz2AzpHyGle7RAgBncysp_KQpVQapVFoF6So20Oo4c5UEXMY1XLl6ty_GaFjUfne5P3/exec';
+const DEFAULT_GAS_URL='https://script.google.com/macros/s/AKfycbz2AzpHyGle7RAgBncysp_KQpVQapVFoF6So20Oo4c5UEXMY1XLl6ty_GaFjUfne5P3/exec';
 let GAS_URL=(DEFAULT_GAS_URL||'').trim();
 if(!GAS_URL){ try{ GAS_URL=localStorage.getItem('lc_gas_url')||''; }catch(e){} }
 function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
