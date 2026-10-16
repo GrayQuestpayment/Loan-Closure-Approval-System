@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<!-- saved from url=(0064)https://grayquestpayment.github.io/Loan-Closure-Approval-System/ -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="2026.09.27-professional-v2-admin-ui">
+<meta name="app-version" content="2026.10.16-v3-single-call">
 <title>Loan Closure Approval System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
-<link href="./Loan Closure Approval System_files/css2" rel="stylesheet">
-<link rel="stylesheet" href="./Loan Closure Approval System_files/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 
 <style>
 :root{--brand:#007FFF;--brand-dark:#0066cc;--brand-light:#e5f2ff}
@@ -38,6 +38,7 @@ textarea{resize:vertical;min-height:90px}
 .btn-submit:disabled{opacity:.5;cursor:default}
 .btn-approve{background:#dcfce7;border:1px solid #86efac;border-radius:999px;padding:9px 18px;font-size:14px;cursor:pointer;color:#15803d;font-family:'Inter',sans-serif;font-weight:600}
 .btn-reject{background:#fee2e2;border:1px solid #fca5a5;border-radius:999px;padding:9px 18px;font-size:14px;cursor:pointer;color:#dc2626;font-family:'Inter',sans-serif;font-weight:600}
+.btn-approve:disabled,.btn-reject:disabled{opacity:.5;cursor:default}
 .card{background:#fff;border:1px solid #eaeaea;border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:14px}
 .card:hover{border-color:var(--brand)}
 .ch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
@@ -72,6 +73,8 @@ textarea{resize:vertical;min-height:90px}
 .sheet-note{background:var(--brand-light);border:1px solid #b3d9ff;border-radius:9px;padding:10px 14px;font-size:12px;color:var(--brand-dark);margin-bottom:1rem}
 .modal-ov{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px}
 .modal-box{background:#fff;border-radius:20px;padding:1.75rem;max-width:440px;width:100%}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:600px){.form-grid,.cmeta,.stats{grid-template-columns:1fr 1fr}.fg.full{grid-column:1/-1}}
 
 /* ===== Professional approval workflow enhancements ===== */
@@ -162,10 +165,10 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="go(&#39;raise&#39;)"><i class="ti ti-file-plus"></i> Raise Request</button>
-    <button class="tab" id="tab-mgr" onclick="go(&#39;mgr&#39;)" style="display:none"><i class="ti ti-shield-check"></i> Approval Authority <span id="pbadge" style="background:#fef9c3;color:#a16207;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;font-weight:600">12</span></button>
-    <button class="tab" id="tab-dash" onclick="go(&#39;dash&#39;)" style="display:none"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
-    <button class="tab" id="tab-login" onclick="go(&#39;login&#39;)" style="margin-left:auto;color:#007FFF"><i class="ti ti-lock"></i> Authority Login</button>
+    <button class="tab active" onclick="go('raise')"><i class="ti ti-file-plus"></i> Raise Request</button>
+    <button class="tab" id="tab-mgr" onclick="go('mgr')" style="display:none"><i class="ti ti-shield-check"></i> Approval Authority <span id="pbadge" style="background:#fef9c3;color:#a16207;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;font-weight:600">0</span></button>
+    <button class="tab" id="tab-dash" onclick="go('dash')" style="display:none"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
+    <button class="tab" id="tab-login" onclick="go('login')" style="margin-left:auto;color:#007FFF"><i class="ti ti-lock"></i> Authority Login</button>
     <button class="tab" id="tab-logout" onclick="doLogout()" style="display:none;margin-left:auto;color:#dc2626"><i class="ti ti-logout"></i> Logout</button>
   </div>
 
@@ -173,7 +176,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
   <div id="p-raise" class="panel active">
     <div id="tok-ok" class="toast ts"></div>
     <div id="tok-err" class="toast td"></div>
-    <div class="sheet-note"><i class="ti ti-table"></i> On submit, this entry will be appended to your <a href="https://docs.google.com/spreadsheets/d/1Z18Szl3I6agGvAnfPKrkxBLG0b8X9sNoobskVPgnRWQ/edit" target="_blank" style="color:#007FFF;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> and a notification email will be sent via Gmail.</div>
+    <div class="sheet-note"><i class="ti ti-table"></i> On submit, this entry will be appended to your <a href="https://docs.google.com/spreadsheets/d/1Z18Szl3I6agGvAnfPKrkxBLG0b8X9sNoobskVPgnRWQ/edit" target="_blank" style="color:#007FFF;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> and a notification email will be sent from finance.communication@grayquest.com.</div>
     <div class="form-grid">
       <div class="fg"><label>App ID / Loan ID</label>
         <input type="text" id="appId" placeholder="Single ID e.g. 1549692, or attach Excel below">
@@ -262,8 +265,8 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
         </select>
         <input type="text" id="deptOther" placeholder="Enter Department / Team name (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb">
       </div>
-      <div class="fg"><label>Approval Authority <span style="text-transform:none;letter-spacing:0;color:#007FFF;font-weight:600">🔒 auto-set by Department</span></label>
-        <select id="mgEmail" disabled="" style="background:#f0f0ec;color:#555;cursor:not-allowed">
+      <div class="fg"><label>Approval Authority <span id="mgEmailHint" style="text-transform:none;letter-spacing:0;color:#007FFF;font-weight:600">🔒 auto-set by Department</span></label>
+        <select id="mgEmail" disabled style="background:#f0f0ec;color:#555;cursor:not-allowed">
           <option value="">Select recipient</option>
           <option value="aamir.khan@grayquest.com">Aamir Khan — aamir.khan@grayquest.com</option>
           <option value="neel.savla@grayquest.com">Neel Savla — neel.savla@grayquest.com</option>
@@ -315,10 +318,10 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
         <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Your Name</label>
         <select id="login-email" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box">
           <option value="">Select your name</option>
-        <option value="aamir.khan@grayquest.com">Aamir Khan</option><option value="neel.savla@grayquest.com">Neel Savla</option><option value="sakshee.thanekar@grayquest.com">Sakshee Thanekar</option><option value="ranjeet@grayquest.com">Ranjeet Singh Rawat</option><option value="finance.communication@grayquest.com">GQ Finance Communication</option><option value="garvit@grayquest.com">Garvit Mathur</option><option value="aashi.mehta@grayquest.com">Aashi Mehta</option><option value="imran.abdul@grayquest.com">Imran Abdul</option></select>
+        </select>
 
         <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Password</label>
-        <input id="login-pw" type="password" placeholder="Enter your password" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;box-sizing:border-box" onkeydown="if(event.key===&#39;Enter&#39;)doPasswordLogin()">
+        <input id="login-pw" type="password" placeholder="Enter your password" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;box-sizing:border-box" onkeydown="if(event.key==='Enter')doPasswordLogin()">
 
         <button onclick="doPasswordLogin()" style="width:100%;background:#007FFF;color:#fff;border:none;border-radius:999px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Log In</button>
       </div>
@@ -344,9 +347,9 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
           </div>
         </div>
         <div style="display:flex;gap:8px">
-          <button id="btn-admin-pw" onclick="toggleAdminPw()" style="display:none;background:none;border:1px solid #93c5fd;border-radius:7px;padding:5px 12px;font-size:12px;color:#007FFF;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600"><i class="ti ti-lock-cog"></i> Manage Passwords</button>
-          <button onclick="toggleChangePw()" style="background:none;border:1px solid #86efac;border-radius:7px;padding:5px 12px;font-size:12px;color:#15803d;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600"><i class="ti ti-key"></i> Change Password</button>
-          <button onclick="doLogout()" style="background:none;border:1px solid #86efac;border-radius:7px;padding:5px 12px;font-size:12px;color:#15803d;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600"><i class="ti ti-logout"></i> Logout</button>
+          <button id="btn-admin-pw" onclick="toggleAdminPw()" style="display:none;background:none;border:1px solid #93c5fd;border-radius:7px;padding:5px 12px;font-size:12px;color:#007FFF;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600"><i class="ti ti-lock-cog"></i> Manage Passwords</button>
+          <button onclick="toggleChangePw()" style="background:none;border:1px solid #86efac;border-radius:7px;padding:5px 12px;font-size:12px;color:#15803d;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600"><i class="ti ti-key"></i> Change Password</button>
+          <button onclick="doLogout()" style="background:none;border:1px solid #86efac;border-radius:7px;padding:5px 12px;font-size:12px;color:#15803d;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600"><i class="ti ti-logout"></i> Logout</button>
         </div>
       </div>
 
@@ -357,8 +360,8 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
         <select id="adminpw-target" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:8px"></select>
         <input id="adminpw-new" type="password" placeholder="New password (min 6 characters)" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:10px;box-sizing:border-box">
         <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button onclick="toggleAdminPw()" style="background:#f0f0ec;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600">Cancel</button>
-          <button onclick="submitAdminPasswordReset()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600">Reset Password</button>
+          <button onclick="toggleAdminPw()" style="background:#f0f0ec;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Cancel</button>
+          <button onclick="submitAdminPasswordReset()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Reset Password</button>
         </div>
       </div>
 
@@ -370,8 +373,8 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
         <input id="chpw-new" type="password" placeholder="New password (min 6 characters)" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:8px;box-sizing:border-box">
         <input id="chpw-confirm" type="password" placeholder="Confirm new password" style="width:100%;font-size:13px;padding:9px 10px;border:1px solid #ddd;border-radius:7px;margin-bottom:10px;box-sizing:border-box">
         <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button onclick="toggleChangePw()" style="background:#f0f0ec;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600">Cancel</button>
-          <button onclick="submitChangePassword()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600">Update Password</button>
+          <button onclick="toggleChangePw()" style="background:#f0f0ec;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Cancel</button>
+          <button onclick="submitChangePassword()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600">Update Password</button>
         </div>
       </div>
 
@@ -388,8 +391,8 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
           <select onchange="filt(this.value)"><option value="all">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <span id="sync-status" style="font-size: 12px; color: rgb(21, 128, 61);">Synced ✓</span>
-          <button onclick="loadRequestsFromSheet()" style="background:#007FFF;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:&#39;Inter&#39;,sans-serif;font-weight:600;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
+          <span id="sync-status" style="font-size:12px;color:#888"></span>
+          <button onclick="loadRequestsFromSheet()" style="background:#007FFF;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
         </div>
       </div>
       <div id="mgr-toast" class="toast"></div>
@@ -460,10 +463,17 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
 
 
 <script>
-const SHEET_ID='1Z18Szl3I6agGvAnfPKrkxBLG0b8X9sNoobskVPgnRWQ';
-const SHEET_TAB='Sheet1';
-const SHEET_HEADERS=['Request ID','Date','Time','App ID','NBFC / Lender','Amount','Mode','Type','SPOC','Department / Team','Remarks','Approval Authority (TO)','CC Email','Status','Attachment','Action Date','Reject Reason'];
+/* ==========================================================
+ * CONFIG
+ * ========================================================== */
+const DEFAULT_GAS_URL='https://script.google.com/a/macros/grayquest.com/s/AKfycbz2AzpHyGle7RAgBncysp_KQpVQapVFoF6So20Oo4c5UEXMY1XLl6ty_GaFjUfne5P3/exec';
+let GAS_URL=(DEFAULT_GAS_URL||'').trim();
+if(!GAS_URL){ try{ GAS_URL=localStorage.getItem('lc_gas_url')||''; }catch(e){} }
+function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
+function isGASConfigured(){ return !!GAS_URL && GAS_URL.startsWith('https://script.google.com'); }
+
 let reqs=[],mails=[],fStatus='all',currentIdentity='';
+const processingActions=new Set();
 
 const mgrNames={
   'neel_aamir'                         :'Neel Savla & Aamir Khan',
@@ -489,6 +499,20 @@ const deptToAuthority={
   'SALES'               :'aamir.khan@grayquest.com'
 };
 
+const ADMIN_EMAILS=['finance.communication@grayquest.com'];
+const GROUP_AUTHORITIES={'neel_aamir':['neel.savla@grayquest.com','aamir.khan@grayquest.com']};
+
+function isAdmin(identity){ return ADMIN_EMAILS.includes(String(identity||'').toLowerCase()); }
+function canAct(identity,assigned){
+  identity=String(identity||'').trim().toLowerCase();
+  assigned=String(assigned||'').trim().toLowerCase();
+  if(!identity)return false;
+  if(isAdmin(identity))return true;
+  if(identity===assigned)return true;
+  return (GROUP_AUTHORITIES[assigned]||[]).includes(identity);
+}
+function isMine(req,identity){ return canAct(identity,req.mgEmail); }
+
 function autoSelectAuthority(dept){
   const sel=document.getElementById('mgEmail');
   const target=deptToAuthority[dept];
@@ -496,20 +520,57 @@ function autoSelectAuthority(dept){
   if([...sel.options].some(o=>o.value===target)) sel.value=target;
 }
 
-const ADMIN_EMAILS=['finance.communication@grayquest.com'];
-function isAdmin(identity){ return ADMIN_EMAILS.includes(identity); }
-
-function isMine(req, identity){
-  if(isAdmin(identity)) return true;
-  return req.mgEmail===identity;
+/* ==========================================================
+ * SERVER CALL (one helper for every request)
+ * text/plain body = no CORS preflight = faster.
+ * ========================================================== */
+async function api(payload,timeoutMs){
+  if(!isGASConfigured()) throw new Error('Apps Script URL is not configured.');
+  const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  const timer=ctrl?setTimeout(()=>ctrl.abort(),timeoutMs||90000):null;
+  try{
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(payload),
+      signal:ctrl?ctrl.signal:undefined
+    });
+    const txt=await res.text();
+    let data;
+    try{ data=JSON.parse(txt); }
+    catch(e){ throw new Error('Unexpected response from Apps Script. Check that the Web App is deployed with access "Anyone".'); }
+    if(!data||data.ok===false) throw new Error((data&&data.error)||'Request failed.');
+    return data;
+  }catch(e){
+    if(e&&e.name==='AbortError') throw new Error('The server took too long to respond. Please refresh and check the Sheet before retrying.');
+    if(e instanceof TypeError) throw new Error('Could not reach the Apps Script Web App. Check your internet connection and that the deployment access is "Anyone".');
+    throw e;
+  }finally{
+    if(timer)clearTimeout(timer);
+  }
 }
 
+// Wake the Apps Script container early so the first submit is faster.
+function warmUpServer(){ if(isGASConfigured()) api({action:'health'},20000).catch(()=>{}); }
+
+/* ==========================================================
+ * EXCEL / CSV ATTACHMENT
+ * ========================================================== */
 let appIdFileData=null;
 function parseExcelAmount(value){
   const cleaned=String(value??'').trim().replace(/[₹,\s]/g,'');
   if(!cleaned)return NaN;
   const n=Number(cleaned);
   return Number.isFinite(n)?n:NaN;
+}
+function arrayBufferToBase64(buf){
+  const bytes=new Uint8Array(buf);
+  let binary='';
+  const chunk=0x8000;
+  for(let i=0;i<bytes.length;i+=chunk){
+    binary+=String.fromCharCode.apply(null,bytes.subarray(i,i+chunk));
+  }
+  return btoa(binary);
 }
 function handleAppIdFile(input){
   const file=input.files&&input.files[0];
@@ -519,19 +580,19 @@ function handleAppIdFile(input){
     input.value='';return;
   }
   const reader=new FileReader();
-  reader.onload=async()=>{
+  reader.onload=()=>{
     try{
+      const buf=reader.result;
       const ext=(file.name.split('.').pop()||'').toLowerCase();
       const items=[];
       const addRow=(appId,amount,idx)=>{
         const id=String(appId??'').trim();
         if(!id)return;
         if(idx===0 && /^(app\s*id|application\s*id|loan\s*id)$/i.test(id))return;
-        const parsedAmount=parseExcelAmount(amount);
-        items.push({appId:id,amount:parsedAmount});
+        items.push({appId:id,amount:parseExcelAmount(amount)});
       };
       if(ext==='csv'){
-        const text=String(reader.result||'').replace(/^\uFEFF/,'');
+        const text=new TextDecoder('utf-8').decode(buf).replace(/^﻿/,'');
         text.split(/\r?\n/).forEach((line,idx)=>{
           if(!line.trim())return;
           const cols=line.split(',').map(v=>String(v||'').trim().replace(/^"|"$/g,''));
@@ -539,7 +600,7 @@ function handleAppIdFile(input){
         });
       }else{
         if(typeof XLSX==='undefined') throw new Error('Excel reader is unavailable.');
-        const wb=XLSX.read(reader.result,{type:'array'});
+        const wb=XLSX.read(buf,{type:'array'});
         const firstSheet=wb.Sheets[wb.SheetNames[0]];
         const rows=XLSX.utils.sheet_to_json(firstSheet,{header:1,defval:''});
         rows.forEach((row,idx)=>addRow(row&&row[0],row&&row[1],idx));
@@ -555,9 +616,9 @@ function handleAppIdFile(input){
       }
       appIdFileData={
         name:file.name,
-        mimeType:file.type||'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        mimeType:file.type||(ext==='csv'?'text/csv':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
         size:file.size,
-        base64:String(reader.result).split(',')[1]||'',
+        base64:arrayBufferToBase64(buf),
         items
       };
       document.getElementById('appId').value='Batch — '+items.length+' IDs';
@@ -571,8 +632,7 @@ function handleAppIdFile(input){
     }
   };
   reader.onerror=()=>{alert('Could not read the file. Please try again.');clearAppIdFile();};
-  if((file.name||'').toLowerCase().endsWith('.csv')) reader.readAsText(file);
-  else reader.readAsArrayBuffer(file);
+  reader.readAsArrayBuffer(file);
 }
 function downloadSampleAppIdExcel(){
   if(typeof XLSX==='undefined'){
@@ -604,6 +664,9 @@ function clearAppIdFile(){
   if(info)info.style.display='none';
 }
 
+/* ==========================================================
+ * FORM FIELD HELPERS
+ * ========================================================== */
 function getSpoc(){ return document.getElementById('spoc').value.trim(); }
 function handleTypChange(val){
   const inp=document.getElementById('typOther');
@@ -629,7 +692,17 @@ function handleDeptChange(val){
   const inp=document.getElementById('deptOther');
   if(val==='other'){inp.style.display='block';inp.focus();}
   else{inp.style.display='none';inp.value='';}
-  autoSelectAuthority(val);
+  // For "Other" department there is no fixed authority, so let the user pick one.
+  const sel=document.getElementById('mgEmail');
+  const hint=document.getElementById('mgEmailHint');
+  const manual=(val==='other');
+  sel.disabled=!manual;
+  sel.style.background=manual?'#fffbeb':'#f0f0ec';
+  sel.style.color=manual?'#0a0a0a':'#555';
+  sel.style.cursor=manual?'pointer':'not-allowed';
+  if(hint) hint.textContent=manual?'✎ select manually for Other department':'🔒 auto-set by Department';
+  if(manual) sel.value='';
+  else autoSelectAuthority(val);
 }
 function getDept(){
   const sel=document.getElementById('department').value;
@@ -646,9 +719,14 @@ function getCC(){
   if(sel==='other') return document.getElementById('ccEmail').value.trim();
   return sel;
 }
+function isValidEmail(v){ return /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(String(v||'').trim()); }
 
-try{const r=localStorage.getItem('lc_reqs');if(r)reqs=JSON.parse(r);}catch(e){}
-try{const m=localStorage.getItem('lc_mails');if(m)mails=JSON.parse(m);}catch(e){}
+try{const r=localStorage.getItem('lc_reqs');if(r)reqs=JSON.parse(r)||[];}catch(e){reqs=[];}
+try{const m=localStorage.getItem('lc_mails');if(m)mails=JSON.parse(m)||[];}catch(e){mails=[];}
+
+function save(){
+  try{localStorage.setItem('lc_reqs',JSON.stringify(reqs));localStorage.setItem('lc_mails',JSON.stringify(mails));}catch(e){}
+}
 
 function updateAdminUI(){
   const setup=document.getElementById('email-setup-link');
@@ -662,11 +740,13 @@ window.addEventListener('load',()=>{
   updStats();
   updBadge();
   updateAdminUI();
+  warmUpServer();
   handleEmailAction();
 });
 
-// ── Handle Approve/Reject links clicked from the email ───────────────────────
-let pendingEmailAction=null; // {act, id} held until the authority logs in
+/* ==========================================================
+ * APPROVE / REJECT LINKS CLICKED FROM THE EMAIL
+ * ========================================================== */
 function getParam(name){
   try{return new URLSearchParams(location.search).get(name);}catch(e){return null;}
 }
@@ -674,77 +754,59 @@ async function handleEmailAction(){
   const act=getParam('act');
   const id=getParam('id');
   const idsParam=(getParam('ids')||'').trim();
-  const token=(getParam('t')||'').trim();
   const linkAuth=(getParam('a')||'').trim();
   if(!act||(!id&&!idsParam)) return;
   try{history.replaceState({},document.title,location.origin+location.pathname);}catch(e){}
-  await runEmailAction(act, id, idsParam, token, linkAuth);
+  await runEmailAction(act,id,idsParam,linkAuth);
 }
 
-async function runEmailAction(act, id, idsParam, token, linkAuth){
-  const ids=[...(idsParam?idsParam.split(','):id?[id]:[])].map(x=>String(x||'').trim()).filter(Boolean);
+async function runEmailAction(act,id,idsParam,linkAuth){
+  const ids=[...new Set((idsParam?idsParam.split(','):id?[id]:[]).map(x=>String(x||'').trim()).filter(Boolean))];
   if(!ids.length)return;
+  linkAuth=String(linkAuth||'').trim().toLowerCase();
 
-  // One Sheet read for the whole batch. Do not wait/retry here: the request is
-  // already written before the email is sent, so the normal case is immediate.
-  await loadRequestsFromSheet(true);
-  const found=ids.map(x=>{const matches=reqs.filter(r=>String(r.id||'').trim()===x);return matches.length?matches[matches.length-1]:null;}).filter(Boolean);
-  const missing=ids.filter(x=>!reqs.some(r=>String(r.id||'').trim()===x));
-  if(missing.length){
-    showActionPopup('error',`Request(s) ${escapeHtml(missing.join(', '))} could not be found in the Sheet. Please open the email again after the Sheet finishes syncing.`);
+  const busy=showBusyPopup('Loading request(s)…');
+  const loaded=await loadRequestsFromSheet(true);
+  busy.remove();
+  if(!loaded){
+    showActionPopup('error','Could not connect to the server to load the request(s). Please check your internet connection and open the email link again.');
     return;
   }
-  const reqsToAct=found;
-  const first=reqsToAct[0];
-  const assigned=(first.mgEmail||'').trim().toLowerCase();
-  linkAuth=String(linkAuth||'').trim().toLowerCase();
-  token=String(token||'').trim();
 
-  // Permanent email-link validation:
-  // The email itself carries the assigned authority address. Older emails can
-  // contain tokens generated by an earlier HTML deployment/secret, so token
-  // mismatch must NOT invalidate a legitimate approval email. The authority
-  // assignment in the Sheet is the source of truth; the token is only an
-  // additional integrity check when it matches. This keeps old and new email
-  // buttons working after future frontend deployments.
-  const expectedToken=actionToken('BATCH|'+ids.join(','),linkAuth);
-  const legacySingleToken=ids.length===1 ? actionToken(ids[0],linkAuth) : '';
-  const tokenValid=token===expectedToken || (ids.length===1 && token===legacySingleToken);
-  const authorityAllowed=reqsToAct.every(r=>{
-    const a=String(r.mgEmail||'').trim().toLowerCase();
-    const allowed=[a];
-    if(a==='neel_aamir')allowed.push('neel.savla@grayquest.com','aamir.khan@grayquest.com');
-    ADMIN_EMAILS.forEach(x=>allowed.push(String(x).toLowerCase()));
-    return allowed.includes(linkAuth);
-  });
-  // Authority assignment is authoritative. Accept a token match OR a valid
-  // authority assignment so links from previous deployments never break.
-  if(!authorityAllowed){
+  const found=ids.map(x=>{const m=reqs.filter(r=>String(r.id||'').trim()===x);return m.length?m[m.length-1]:null;}).filter(Boolean);
+  const missing=ids.filter(x=>!reqs.some(r=>String(r.id||'').trim()===x));
+  if(missing.length){
+    showActionPopup('error',`Request(s) ${escapeHtml(missing.join(', '))} could not be found in the Sheet.`);
+    return;
+  }
+  if(!found.every(r=>canAct(linkAuth,r.mgEmail))){
     showActionPopup('error','This approval link is not authorised for the assigned approval authority.');
     return;
   }
 
-  const pending=reqsToAct.filter(r=>String(r.status||'Pending').trim().toLowerCase()==='pending');
+  const pending=found.filter(r=>String(r.status||'Pending').trim().toLowerCase()==='pending');
   if(!pending.length){
-    const details=reqsToAct.map(r=>`${escapeHtml(r.id)} — ${escapeHtml(r.status||'Finalised')} ${r.actionDate?`on ${escapeHtml(r.actionDate)}`:''}`).join('<br>');
-    showActionPopup('info',`These request(s) have already been finalised and cannot be actioned again:<br><br>${details}<br><br>Please use a new pending approval email for a new request.`);
+    const details=found.map(r=>`${escapeHtml(r.id)} — ${escapeHtml(r.status||'Finalised')} ${r.actionDate?`on ${escapeHtml(r.actionDate)}`:''}`).join('<br>');
+    showActionPopup('info',`These request(s) have already been finalised and cannot be actioned again:<br><br>${details}`);
     return;
   }
   if(act==='approve'){
-    await finalizeBatchInAppAction(pending,'Approved','');
-    showActionPopup('approved',`${pending.length} request(s) have been APPROVED together. A confirmation email has been sent to the requester.`);
+    const wait=showBusyPopup(`Approving ${pending.length} request(s)…`);
+    const out=await finalizeBatchInAppAction(found,'Approved','',linkAuth,ids);
+    wait.remove();
+    showActionResult(out,'Approved');
   }else if(act==='reject'){
-    promptRejectBatchComment(pending,'email');
+    promptRejectBatchComment(pending,linkAuth,ids);
   }
 }
 
-function promptRejectBatchComment(reqList,source){
+function promptRejectBatchComment(reqList,actor,allIds){
   const ids=reqList.map(r=>r.id).join(', ');
   const modal=document.createElement('div');
   modal.className='modal-ov';modal.id='reject-modal';
   modal.innerHTML=`
     <div class="modal-box" style="text-align:left">
-      <div style="font-size:16px;font-weight:700;color:#111;margin-bottom:6px">Reject ${reqList.length} Requests</div>
+      <div style="font-size:16px;font-weight:700;color:#111;margin-bottom:6px">Reject ${reqList.length} Request(s)</div>
       <div style="font-size:12px;color:#888;margin-bottom:12px">${escapeHtml(ids)}</div>
       <label style="font-size:11px;font-weight:600;color:#dc2626;text-transform:uppercase">Rejection Reason (mandatory)</label>
       <textarea id="reject-comment-input" placeholder="Enter one rejection reason for the selected requests..." style="width:100%;margin-top:6px;min-height:80px"></textarea>
@@ -758,9 +820,22 @@ function promptRejectBatchComment(reqList,source){
     const comment=document.getElementById('reject-comment-input').value.trim();
     if(!comment){alert('Rejection reason is required.');return;}
     document.getElementById('reject-modal').remove();
-    await finalizeBatchInAppAction(reqList,'Rejected',comment);
-    showActionPopup('approved',`${reqList.length} request(s) have been REJECTED together.`);
+    const wait=showBusyPopup(`Rejecting ${reqList.length} request(s)…`);
+    const out=await finalizeBatchInAppAction(reqList,'Rejected',comment,actor,allIds);
+    wait.remove();
+    showActionResult(out,'Rejected');
   };
+}
+
+function showBusyPopup(msg){
+  const m=document.createElement('div');
+  m.className='modal-ov';
+  m.innerHTML=`<div class="modal-box" style="text-align:center">
+    <i class="ti ti-loader-2 spin" style="font-size:34px;color:#007FFF"></i>
+    <div style="font-size:15px;color:#333;margin-top:12px">${escapeHtml(msg)}</div>
+  </div>`;
+  document.body.appendChild(m);
+  return m;
 }
 
 function showActionPopup(type,msg){
@@ -777,49 +852,39 @@ function showActionPopup(type,msg){
   document.body.appendChild(m);
 }
 
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbznOMrBips476221tOgev22rWg0EEIfn9IGMHtViGiZZE_XtnE30JN1oB1kIKdflOlt/exec';
-let GAS_URL = (DEFAULT_GAS_URL||'').trim();
-if(!GAS_URL){ try{ GAS_URL = localStorage.getItem('lc_gas_url')||''; }catch(e){} }
-function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
-function isGASConfigured(){ return GAS_URL && GAS_URL.startsWith('https://script.google.com'); }
-
-// ── Secret action token ──────────────────────────────────────────────────────
-// A token is derived from the request id + the assigned authority email + a
-// fixed secret. Only the email sent to that authority carries the matching
-// token, so an email Approve/Reject works WITHOUT login, yet only the correct
-// authority (whoever holds that email) can act. Admin's token also works.
-const ACTION_SECRET='GQ-LoanClosure-2026-Secret-Key';
-function actionToken(reqId, authEmail){
-  const s=(String(reqId).trim()+'|'+String(authEmail||'').trim().toLowerCase()+'|'+ACTION_SECRET);
-  let h=0;
-  for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
-  // second pass for a longer, less guessable token
-  let h2=5381;
-  for(let i=0;i<s.length;i++){ h2=((h2<<5)+h2)+s.charCodeAt(i); h2|=0; }
-  return (Math.abs(h).toString(36)+Math.abs(h2).toString(36)).toUpperCase();
+function showActionResult(out,action){
+  if(!out||!out.ok){
+    showActionPopup('error',escapeHtml((out&&out.error)||'The action could not be completed. Please try again.'));
+    return;
+  }
+  const res=out.res;
+  const n=(res.updated||[]).length;
+  const skippedHtml=(res.skipped||[]).map(s=>`${escapeHtml(s.id)} — ${escapeHtml(s.reason||s.status)}`).join('<br>');
+  if(!n){
+    showActionPopup('info',`No request was updated.${skippedHtml?'<br><br>'+skippedHtml:''}`);
+    return;
+  }
+  let msg=`${n} request(s) have been <b>${action.toUpperCase()}</b>.`;
+  msg+=res.emailSent
+    ?' A confirmation email has been sent to the requester.'
+    :`<br><br>The Sheet is updated, but the confirmation email failed:<br>${escapeHtml(res.emailError||'unknown error')}`;
+  if(skippedHtml) msg+=`<br><br>Skipped:<br>${skippedHtml}`;
+  showActionPopup(res.emailSent?'approved':'info',msg);
 }
 
-function save(){
-  try{localStorage.setItem('lc_reqs',JSON.stringify(reqs));localStorage.setItem('lc_mails',JSON.stringify(mails));}catch(e){}
-}
-
-// Load ALL requests from the Google Sheet (so every device/authority sees the same data)
-let isLoadingReqs=false;
-async function loadRequestsFromSheet(silent){
-  if(!isGASConfigured())return false;
-  if(isLoadingReqs)return false;
-  isLoadingReqs=true;
+/* ==========================================================
+ * LOAD REQUESTS FROM THE SHEET
+ * ========================================================== */
+let reqsLoadPromise=null;
+function loadRequestsFromSheet(silent){
+  if(!isGASConfigured())return Promise.resolve(false);
+  if(reqsLoadPromise)return reqsLoadPromise;
   const statusEl=document.getElementById('sync-status');
   if(statusEl&&!silent){statusEl.textContent='Syncing requests…';statusEl.style.color='#f59e0b';}
-  try{
-    const res=await fetch(GAS_URL,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'getRequests',sheetId:SHEET_ID,tab:SHEET_TAB})
-    });
-    const data=await res.json();
-    if(data&&data.ok&&Array.isArray(data.requests)){
-      reqs=data.requests;
+  reqsLoadPromise=(async()=>{
+    try{
+      const data=await api({action:'getRequests'},60000);
+      reqs=Array.isArray(data.requests)?data.requests:[];
       save();
       if(statusEl){statusEl.textContent='Synced ✓';statusEl.style.color='#15803d';}
       renderReqs();
@@ -829,20 +894,21 @@ async function loadRequestsFromSheet(silent){
         populateDashboardFilters();
         renderDash();
       }
-      const dash=document.getElementById('p-dash');
-      if(dash && dash.classList.contains('active')) renderDash();
-      isLoadingReqs=false;
       return true;
+    }catch(e){
+      if(statusEl){statusEl.textContent='Sync failed: '+e.message;statusEl.style.color='#dc2626';}
+      return false;
+    }finally{
+      reqsLoadPromise=null;
     }
-  }catch(e){
-    if(statusEl){statusEl.textContent='Sync failed (offline)';statusEl.style.color='#dc2626';}
-  }
-  isLoadingReqs=false;
-  return false;
+  })();
+  return reqsLoadPromise;
 }
+
 function upd(){const v=parseFloat(document.getElementById('amt').value)||0;document.getElementById('adsp').textContent='₹ '+v.toLocaleString('en-IN');}
 function updBadge(){
-  const p=reqs.filter(r=>r.status==='Pending').length;
+  const list=currentIdentity?reqs.filter(r=>isMine(r,currentIdentity)):reqs;
+  const p=list.filter(r=>r.status==='Pending').length;
   const b=document.getElementById('pbadge');
   if(b)b.textContent=p;
 }
@@ -854,9 +920,12 @@ function updStats(){
   document.getElementById('st-tot').textContent=mine.length;
   document.getElementById('st-pen').textContent=p.length;
   document.getElementById('st-apr').textContent=a.length;
-  document.getElementById('st-amt').textContent='₹'+p.reduce((s,r)=>s+r.amt,0).toLocaleString('en-IN');
+  document.getElementById('st-amt').textContent='₹'+p.reduce((s,r)=>s+(Number(r.amt)||0),0).toLocaleString('en-IN');
 }
 
+/* ==========================================================
+ * AUTHORITY LOGIN (client-side passwords, unchanged)
+ * ========================================================== */
 const AUTHORITY_DEFAULTS={
   'aamir.khan@grayquest.com'           :{name:'Aamir Khan',                 pw:'Aamir@4287'},
   'neel.savla@grayquest.com'           :{name:'Neel Savla',                 pw:'Neel@6931'},
@@ -918,16 +987,6 @@ function doPasswordLogin(){
     if(adminBtn)adminBtn.style.display='none';
   }
   go('mgr');
-  renderReqs();
-  updStats();
-  loadRequestsFromSheet(); // pull latest requests from the Sheet (multi-user)
-
-  // If the authority arrived via an email Approve/Reject link, process it now
-  if(pendingEmailAction){
-    const pa=pendingEmailAction;
-    pendingEmailAction=null;
-    setTimeout(()=>runEmailAction(pa.act,pa.id),300);
-  }
 }
 
 function doLogout(){
@@ -991,12 +1050,15 @@ function submitAdminPasswordReset(){
   setTimeout(()=>{ document.getElementById('adminpw-box').style.display='none'; },1500);
 }
 
+/* ==========================================================
+ * TABS + APPROVAL AUTHORITY LIST
+ * ========================================================== */
 function go(t){
   if((t==='mgr'||t==='dash')&&!currentIdentity){t='login';}
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('p-'+t).classList.add('active');
-  
+
   if(t==='raise')document.querySelector('.tab[onclick*="raise"]').classList.add('active');
   if(t==='login')document.getElementById('tab-login').classList.add('active');
   if(t==='mgr'){document.getElementById('tab-mgr').classList.add('active');renderReqs();loadRequestsFromSheet(true);}
@@ -1007,6 +1069,7 @@ function filt(v){fStatus=v;renderReqs();}
 
 function renderReqs(){
   const list=document.getElementById('rlist');
+  if(!list)return;
   const mine=reqs.filter(r=>isMine(r,currentIdentity));
   const filtered=fStatus==='all'?mine:mine.filter(r=>r.status===fStatus);
   updStats();
@@ -1014,68 +1077,77 @@ function renderReqs(){
     list.innerHTML='<div class="empty"><i class="ti ti-inbox" style="font-size:36px;display:block;margin-bottom:8px"></i>No requests found.</div>';
     return;
   }
-  list.innerHTML=[...filtered].reverse().map(r=>`
-    <div class="card" style="border-left:3px solid ${r.status==='Pending'?'#f59e0b':r.status==='Approved'?'#22c55e':'#ef4444'}">
+  list.innerHTML=[...filtered].reverse().map(r=>{
+    const st=String(r.status||'Pending');
+    const busy=[...processingActions].some(k=>k.split('|').includes(r.id));
+    return `
+    <div class="card" style="border-left:3px solid ${st==='Pending'?'#f59e0b':st==='Approved'?'#22c55e':'#ef4444'}">
       <div class="ch">
         <div>
-          <div class="ct"><i class="ti ti-file-invoice"></i> ${r.id} &nbsp;—&nbsp; App ID: ${r.appId}</div>
-          <div class="cs">${r.date} ${r.time} · SPOC: <strong>${r.spoc}</strong></div>
+          <div class="ct"><i class="ti ti-file-invoice"></i> ${escapeHtml(r.id)} &nbsp;—&nbsp; App ID: ${escapeHtml(r.appId)}</div>
+          <div class="cs">${escapeHtml(r.date)} ${escapeHtml(r.time)} · SPOC: <strong>${escapeHtml(r.spoc)}</strong></div>
         </div>
-        <span class="badge b-${r.status.toLowerCase()}">${r.status}</span>
+        <span class="badge b-${escapeHtml(st.toLowerCase())}">${escapeHtml(st)}</span>
       </div>
       <div class="cmeta">
-        <div><div class="ml">NBFC</div><div class="mv">${r.nbfc}</div></div>
-        <div><div class="ml">Approval Amt</div><div class="mv amt">₹${r.amt.toLocaleString('en-IN')}</div></div>
-        <div><div class="ml">Type</div><div class="mv">${r.typ}</div></div>
-        <div><div class="ml">Department</div><div class="mv">${r.dept||'—'}</div></div>
+        <div><div class="ml">NBFC</div><div class="mv">${escapeHtml(r.nbfc)}</div></div>
+        <div><div class="ml">Approval Amt</div><div class="mv amt">₹${(Number(r.amt)||0).toLocaleString('en-IN')}</div></div>
+        <div><div class="ml">Type</div><div class="mv">${escapeHtml(r.typ)}</div></div>
+        <div><div class="ml">Department</div><div class="mv">${escapeHtml(r.dept||'—')}</div></div>
       </div>
-      <div class="remarks"><i class="ti ti-message"></i> ${r.rmk}</div>
-      ${r.hasAttachment?`<div style="font-size:12px;color:#007FFF;margin-top:6px;background:#e5f2ff;border:1px solid #b3d9ff;border-radius:6px;padding:6px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-file-spreadsheet"></i> Excel attached: ${r.attachmentName||'batch file'}</div>`:''}
-      ${r.status==='Rejected'&&r.rejectComment?`<div class="rejnote"><i class="ti ti-alert-circle"></i> <strong>Rejection reason:</strong> ${r.rejectComment}</div>`:''}
-      ${r.status==='Pending'?`
+      <div class="remarks"><i class="ti ti-message"></i> ${escapeHtml(r.rmk)}</div>
+      ${r.hasAttachment?`<div style="font-size:12px;color:#007FFF;margin-top:6px;background:#e5f2ff;border:1px solid #b3d9ff;border-radius:6px;padding:6px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-file-spreadsheet"></i> Excel attached: ${escapeHtml(r.attachmentName||'batch file')}</div>`:''}
+      ${st==='Rejected'&&r.rejectComment?`<div class="rejnote"><i class="ti ti-alert-circle"></i> <strong>Rejection reason:</strong> ${escapeHtml(r.rejectComment)}</div>`:''}
+      ${st==='Pending'?`
         <div class="cact">
-          <button class="btn-approve" onclick="inAppApprove('${r.id}')"><i class="ti ti-check"></i> Approve</button>
-          <button class="btn-reject" onclick="inAppReject('${r.id}')"><i class="ti ti-x"></i> Reject</button>
+          <button class="btn-approve" ${busy?'disabled':''} onclick="inAppApprove('${escapeHtml(r.id)}')"><i class="ti ti-check"></i> Approve</button>
+          <button class="btn-reject" ${busy?'disabled':''} onclick="inAppReject('${escapeHtml(r.id)}')"><i class="ti ti-x"></i> Reject</button>
         </div>`:''}
-      ${r.status!=='Pending'?`<div style="text-align:right;font-size:11px;color:#aaa;padding-top:8px">Actioned: ${r.actionDate||''}</div>`:''}
-    </div>`).join('');
+      ${st!=='Pending'?`<div style="text-align:right;font-size:11px;color:#aaa;padding-top:8px">Actioned: ${escapeHtml(r.actionDate||'')}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function findReq(id){
+  const m=reqs.filter(r=>r.id===id);
+  return m.length?m[m.length-1]:null;
 }
 
 function inAppApprove(id){
-  const req=reqs.find(r=>r.id===id);
+  const req=findReq(id);
   if(!req)return;
   if(req.status!=='Pending'){
-    showActionPopup('info',`Request ${req.id} is already ${String(req.status).toLowerCase()}. No further action is allowed.`);
+    showActionPopup('info',`Request ${escapeHtml(req.id)} is already ${escapeHtml(String(req.status).toLowerCase())}. No further action is allowed.`);
     return;
   }
-  if(!isAdmin(currentIdentity) && String(req.mgEmail||'').toLowerCase()!==String(currentIdentity||'').toLowerCase()){
+  if(!canAct(currentIdentity,req.mgEmail)){
     showActionPopup('error','You are not the assigned approval authority for this request.');
     return;
   }
-  finalizeInAppAction(req,'Approved','');
+  finalizeBatchInAppAction([req],'Approved','',currentIdentity);
 }
 
 function inAppReject(id){
-  const req=reqs.find(r=>r.id===id);
+  const req=findReq(id);
   if(!req)return;
   if(req.status!=='Pending'){
-    showActionPopup('info',`Request ${req.id} is already ${String(req.status).toLowerCase()}. No further action is allowed.`);
+    showActionPopup('info',`Request ${escapeHtml(req.id)} is already ${escapeHtml(String(req.status).toLowerCase())}. No further action is allowed.`);
     return;
   }
-  if(!isAdmin(currentIdentity) && String(req.mgEmail||'').toLowerCase()!==String(currentIdentity||'').toLowerCase()){
+  if(!canAct(currentIdentity,req.mgEmail)){
     showActionPopup('error','You are not the assigned approval authority for this request.');
     return;
   }
-  promptRejectComment(req,'inapp');
+  promptRejectComment(req);
 }
 
-function promptRejectComment(req,source){
+function promptRejectComment(req){
   const modal=document.createElement('div');
   modal.className='modal-ov';modal.id='reject-modal';
   modal.innerHTML=`
     <div class="modal-box" style="text-align:left">
-      <div style="font-size:16px;font-weight:700;color:#111;margin-bottom:6px">Reject Request ${req.id}</div>
-      <div style="font-size:12px;color:#888;margin-bottom:12px">App ID ${req.appId} · ₹${req.amt.toLocaleString('en-IN')}</div>
+      <div style="font-size:16px;font-weight:700;color:#111;margin-bottom:6px">Reject Request ${escapeHtml(req.id)}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:12px">App ID ${escapeHtml(req.appId)} · ₹${(Number(req.amt)||0).toLocaleString('en-IN')}</div>
       <label style="font-size:11px;font-weight:600;color:#dc2626;text-transform:uppercase">Rejection Reason (mandatory)</label>
       <textarea id="reject-comment-input" placeholder="Enter the reason for rejection..." style="width:100%;margin-top:6px;min-height:80px"></textarea>
       <div style="display:flex;gap:8px;margin-top:14px">
@@ -1088,101 +1160,89 @@ function promptRejectComment(req,source){
     const comment=document.getElementById('reject-comment-input').value.trim();
     if(!comment){alert('Rejection reason is required.');return;}
     document.getElementById('reject-modal').remove();
-    finalizeInAppAction(req,'Rejected',comment);
+    finalizeBatchInAppAction([req],'Rejected',comment,currentIdentity);
   };
 }
 
-async function finalizeInAppAction(req,action,comment){
-  await finalizeBatchInAppAction([req],action,comment);
+function mgrToast(kind,msg){
+  const toast=document.getElementById('mgr-toast');
+  if(!toast)return;
+  const styles={
+    busy:['#fffbeb','#92680b','#f3d77a'],
+    ok:['#f0fdf4','#15803d','#bbf7d0'],
+    warn:['#fffbeb','#92680b','#f3d77a'],
+    err:['#fef2f2','#dc2626','#fecaca']
+  }[kind]||['#f8fafc','#334155','#e2e8f0'];
+  toast.className='toast';
+  toast.style.background=styles[0];
+  toast.style.color=styles[1];
+  toast.style.border='1px solid '+styles[2];
+  toast.style.display='block';
+  toast.textContent=msg;
+  clearTimeout(mgrToast._t);
+  if(kind==='ok') mgrToast._t=setTimeout(()=>{toast.style.display='none';},7000);
 }
 
-async function finalizeBatchInAppAction(reqList,action,comment){
-  const pending=reqList.filter(r=>r && (!r.status||r.status==='Pending'));
-  if(!pending.length)return;
-  const actionKey=pending.map(r=>r.id).join('|')+'|'+action;
-  if(processingActions.has(actionKey))return;
+// ONE server call: updates every row in the Sheet and sends ONE confirmation email.
+async function finalizeBatchInAppAction(reqList,action,comment,actor,allIds){
+  const list=(reqList||[]).filter(Boolean);
+  const pending=list.filter(r=>!r.status||r.status==='Pending');
+  if(!pending.length) return {ok:false,error:'These request(s) are already finalised.'};
+  const ids=(allIds&&allIds.length)?allIds:list.map(r=>r.id);
+  const actionKey=ids.join('|')+'|'+action;
+  if(processingActions.has(actionKey)) return {ok:false,error:'This action is already being processed.'};
   processingActions.add(actionKey);
+  renderReqs();
+  mgrToast('busy',`Recording ${action.toLowerCase()} for ${pending.length} request(s)…`);
+  try{
+    const res=await api({
+      action:'actionRequests',
+      ids,
+      status:action,
+      rejectReason:comment||'',
+      actor:String(actor||currentIdentity||'').toLowerCase()
+    },120000);
+    applyActionResult(res,comment);
+    const n=(res.updated||[]).length;
+    if(n&&res.emailSent) mgrToast('ok',`✓ ${n} request(s) ${action.toLowerCase()} — confirmation email sent to the requester.`);
+    else if(n) mgrToast('warn',`✓ ${n} request(s) ${action.toLowerCase()} in the Sheet, but the confirmation email failed: ${res.emailError||'unknown error'}`);
+    else mgrToast('warn','No request was updated. '+(res.skipped||[]).map(s=>s.id+': '+(s.reason||s.status)).join('; '));
+    return {ok:true,res};
+  }catch(e){
+    mgrToast('err','Action failed: '+e.message);
+    return {ok:false,error:e.message};
+  }finally{
+    processingActions.delete(actionKey);
+    renderReqs();
+  }
+}
 
-  const now=new Date().toLocaleString('en-IN');
-  pending.forEach(req=>{
-    req.status=action;
-    req.actionDate=now;
-    if(action==='Rejected')req.rejectComment=comment;
+function applyActionResult(res,comment){
+  const updated=new Set(res.updated||[]);
+  reqs.forEach(r=>{
+    if(updated.has(r.id)){
+      r.status=res.newStatus;
+      r.actionDate=res.actionDate;
+      r.rejectComment=res.newStatus==='Rejected'?(comment||''):'';
+    }
+  });
+  (res.skipped||[]).forEach(s=>{
+    if(s.status&&s.status!=='Pending'){
+      reqs.filter(r=>r.id===s.id).forEach(r=>{r.status=s.status;if(s.actionDate)r.actionDate=s.actionDate;});
+    }
   });
   save();
   renderReqs();updStats();updBadge();
-
-  const toast=document.getElementById('mgr-toast');
-  if(toast){toast.className='toast';toast.style.background='#fffbeb';toast.style.color='#92680b';toast.style.border='1px solid #f3d77a';toast.style.display='block';toast.textContent=`Recording ${action.toLowerCase()} for ${pending.length} request(s)…`;}
-
-  // Run Sheet updates in parallel instead of one after another.
-  const sheetResults=await Promise.all(pending.map(req=>syncSheetStatus(req.id,action,req.actionDate,comment)));
-  const okSheet=sheetResults.every(Boolean);
-  if(!okSheet){
-    pending.forEach(req=>{req.status='Pending';req.actionDate='';if(action==='Rejected')req.rejectComment='';});
-    save();renderReqs();updStats();updBadge();processingActions.delete(actionKey);
-    if(toast){toast.style.background='#fef2f2';toast.style.color='#dc2626';toast.style.border='1px solid #fecaca';toast.textContent=`The Sheet update failed. No request was finalised. Please retry.`;}
-    return false;
-  }
-
-  // Confirmation reuses the SAME subject as the original approval email so Gmail
-  // keeps the whole request lifecycle in ONE conversation thread automatically.
-  const subject=pending.length===1
-    ? `Loan Closure Approval – App ID ${pending[0].appId}`
-    : `Loan Closure Approval – ${pending.length} App IDs (${pending[0].id} to ${pending[pending.length-1].id})`;
-  const {html,plain}=buildBatchStatusEmail(pending,action,comment);
-  const toAddr=String(pending[0].spoc||'').trim();
-  const ccList=String(pending[0].ccEmail||'').trim();
-  const confirmationSent=await sendGmail(toAddr,ccList,subject,html,plain,null,null);
-
-  processingActions.delete(actionKey);
-  if(toast){toast.style.background=confirmationSent?'#f0fdf4':'#fffbeb';toast.style.color=confirmationSent?'#15803d':'#92680b';toast.style.border=confirmationSent?'1px solid #bbf7d0':'1px solid #f3d77a';toast.style.display='block';toast.textContent=confirmationSent?`✓ ${pending.length} request(s) ${action.toLowerCase()} — confirmation replied in the original approval email.`:`✓ ${pending.length} request(s) ${action.toLowerCase()} — Sheet updated, but confirmation email could not be replied in the original thread.`;setTimeout(()=>{toast.style.display='none';},7000);}
-  return confirmationSent;
+  if(document.getElementById('p-dash')?.classList.contains('active')) renderDash();
 }
 
-function buildBatchStatusEmail(reqList,action,comment){
-  const isApp=action==='Approved', color=isApp?'#15803d':'#dc2626';
-  const total=reqList.reduce((s,r)=>s+Number(r.amt||0),0);
-  const rows=reqList.map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.id)}</td><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.appId)}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:right">₹${Number(r.amt||0).toLocaleString('en-IN')}</td></tr>`).join('');
-  const html=`<div style="font-family:Arial,sans-serif;max-width:680px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
-    <div style="background:${color};color:#fff;padding:18px 24px"><h2 style="margin:0;font-size:18px">Loan Closure Requests ${action}</h2><p style="margin:4px 0 0;font-size:13px;opacity:.9">${reqList.length} request(s)</p></div>
-    <div style="padding:24px;background:#fff"><p style="font-size:14px;color:#333">${reqList.length} loan closure request(s) have been <b>${action.toUpperCase()}</b> by <b>${escapeHtml(mgrNames[reqList[0].mgEmail]||reqList[0].mgEmail)}</b>.</p>
-    <p style="font-size:13px;color:#666">Total Amount: <b style="color:${color}">₹${total.toLocaleString('en-IN')}</b></p>
-    <table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="background:#f7f7f5"><th style="padding:7px;text-align:left">Request</th><th style="padding:7px;text-align:left">App ID</th><th style="padding:7px;text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table>
-    ${comment?`<p style="font-size:13px;color:#dc2626;margin-top:16px"><b>Rejection Reason:</b> ${escapeHtml(comment)}</p>`:''}</div></div>`;
-  const plain=`${reqList.length} request(s) have been ${action}.\n\n${reqList.map(r=>r.id+' | App ID '+r.appId+' | ₹'+r.amt).join('\n')}\n\nTotal Amount: ₹${total}\n${comment?'Rejection Reason: '+comment:''}`;
-  return {html,plain};
-}
-
-function buildStatusEmail(req,action,comment){
-  const isApp=action==='Approved';
-  const color=isApp?'#15803d':'#dc2626';
-  const html=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
-    <div style="background:${color};color:#fff;padding:18px 24px">
-      <h2 style="margin:0;font-size:18px">Loan Closure Request ${action}</h2>
-      <p style="margin:4px 0 0;font-size:13px;opacity:0.9">${req.id} · App ID ${req.appId}</p>
-    </div>
-    <div style="padding:24px;background:#fff">
-      <p style="font-size:14px;color:#333">Your request <b>${req.id}</b> is now <b>${action.toUpperCase()}</b> by <b>${mgrNames[req.mgEmail]||req.mgEmail}</b>.</p>
-      <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:6px 0;color:#888">App ID:</td><td style="font-weight:600">${req.appId}</td></tr>
-        <tr><td style="padding:6px 0;color:#888">Amount:</td><td style="font-weight:700;color:${color}">₹${req.amt.toLocaleString('en-IN')}</td></tr>
-        <tr><td style="padding:6px 0;color:#888">NBFC:</td><td>${req.nbfc}</td></tr>
-        <tr><td style="padding:6px 0;color:#888">Type:</td><td>${req.typ}</td></tr>
-        <tr><td style="padding:6px 0;color:#888">Department:</td><td>${req.dept||'—'}</td></tr>
-        ${comment?`<tr><td style="padding:6px 0;color:#dc2626;font-weight:600">Rejection Reason:</td><td style="color:#dc2626">${comment}</td></tr>`:''}
-      </table>
-    </div>
-  </div>`;
-  const plain=`Your request ${req.id} has been ${action}.\nApp ID: ${req.appId}\nAmount: ₹${req.amt}\nNBFC: ${req.nbfc}\nDepartment: ${req.dept||''}\nApproved/Rejected by: ${mgrNames[req.mgEmail]||req.mgEmail}\n${comment?'Reason: '+comment:''}`;
-  return {html,plain};
-}
-
+/* ==========================================================
+ * RAISE REQUEST — ONE server call: save rows + send approval email
+ * ========================================================== */
 async function raise(){
   const typedAppId=document.getElementById('appId').value.trim();
   const isBatch=!!(appIdFileData&&Array.isArray(appIdFileData.items)&&appIdFileData.items.length);
   const batchItems=isBatch?appIdFileData.items:[];
-  const appIds=isBatch?batchItems.map(x=>x.appId):(typedAppId?[typedAppId]:[]);
   const nbfc=getNbfc();
   const singleAmt=parseFloat(document.getElementById('amt').value);
   const typ=getTyp();
@@ -1195,183 +1255,74 @@ async function raise(){
   const tokOk=document.getElementById('tok-ok');
   const tokErr=document.getElementById('tok-err');
   tokOk.style.display='none'; tokErr.style.display='none';
+  const fail=msg=>{ tokErr.textContent=msg; tokErr.style.display='block'; };
 
-  if(!appIds.length){ tokErr.textContent='Please enter App ID or attach an Excel.'; tokErr.style.display='block'; return; }
-  if(!nbfc){ tokErr.textContent='Please select NBFC / Lender.'; tokErr.style.display='block'; return; }
+  if(!isBatch&&!typedAppId) return fail('Please enter App ID or attach an Excel.');
+  if(!nbfc) return fail('Please select NBFC / Lender.');
   if(isBatch){
-    const invalid=batchItems.some(x=>!Number.isFinite(x.amount)||x.amount<=0);
-    if(invalid){ tokErr.textContent='Every Excel row must have a valid positive Amount in column 2.'; tokErr.style.display='block'; return; }
-  }else if(!singleAmt||singleAmt<=0){ tokErr.textContent='Please enter a valid Approval Amount.'; tokErr.style.display='block'; return; }
-  if(!typ){ tokErr.textContent='Please select Type.'; tokErr.style.display='block'; return; }
-  if(!spoc){ tokErr.textContent='Please enter your SPOC email.'; tokErr.style.display='block'; return; }
-  if(!rmk){ tokErr.textContent='Please enter Remarks / Reason for approval.'; tokErr.style.display='block'; return; }
-  if(!dept){ tokErr.textContent='Please select Department / Team.'; tokErr.style.display='block'; return; }
-  if(!mgEmail){ tokErr.textContent='Please select an Approval Authority.'; tokErr.style.display='block'; return; }
+    if(batchItems.some(x=>!Number.isFinite(x.amount)||x.amount<=0)) return fail('Every Excel row must have a valid positive Amount in column 2.');
+  }else if(!singleAmt||singleAmt<=0) return fail('Please enter a valid Approval Amount.');
+  if(!typ) return fail('Please select Type.');
+  if(!spoc) return fail('Please enter your SPOC email.');
+  if(!isValidEmail(spoc)) return fail('SPOC email is not valid.');
+  if(!rmk) return fail('Please enter Remarks / Reason for approval.');
+  if(!dept) return fail('Please select Department / Team.');
+  if(!mgEmail) return fail('Please select an Approval Authority.');
+  if(!isGASConfigured()) return fail('Apps Script URL is not configured.');
 
   const sbtn=document.getElementById('sbtn');
-  sbtn.disabled=true; sbtn.textContent='Submitting...';
+  sbtn.disabled=true;
+  sbtn.innerHTML='<i class="ti ti-loader-2 spin"></i> Submitting…';
+  sync('Saving to Sheet and sending email…','p');
 
-  const d=new Date();
-  const dateStr=d.toLocaleDateString('en-GB');
-  const timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  const createdRequests=[];
-  let nextReqNo=Math.max(0,...reqs.map(r=>{const m=String(r.id||'').match(/^REQ-(\d+)$/i);return m?Number(m[1]):0;}).filter(Number.isFinite))+1;
+  const items=isBatch
+    ? batchItems.map(x=>({appId:x.appId,amount:x.amount}))
+    : [{appId:typedAppId,amount:singleAmt}];
+  const payload={action:'submitRequest',items,nbfc,typ,spoc,dept,rmk,mgEmail,ccEmail};
+  if(appIdFileData&&appIdFileData.base64){
+    payload.attachment={name:appIdFileData.name,mimeType:appIdFileData.mimeType,base64:appIdFileData.base64};
+  }
 
-  const requestItems=isBatch?batchItems:[{appId:typedAppId,amount:singleAmt}];
-  for(const item of requestItems){
-    const reqId='REQ-'+nextReqNo++;
-    const rowAmount=Number(item.amount);
-    const newReq={
-      id:reqId,date:dateStr,time:timeStr,appId:item.appId,nbfc,amt:rowAmount,mode:'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,
-      status:'Pending',hasAttachment:!!appIdFileData,attachmentName:appIdFileData?appIdFileData.name:'',actionDate:'',rejectComment:'',threadKey:''
-    };
-    reqs.push(newReq);
+  try{
+    const res=await api(payload,120000);
+    (res.requests||[]).forEach(r=>reqs.push(r));
     save();
-    createdRequests.push(newReq);
-  }
+    updBadge();
 
-  // Every Excel row gets its own Google Sheet row. Duplicate App IDs are intentionally
-  // allowed. All rows are sent in ONE request (not a slow per-row loop), so a bulk
-  // upload of many App IDs is appended in a single fast round-trip to Apps Script.
-  const allRows=createdRequests.map(newReq=>[newReq.id,dateStr,timeStr,newReq.appId,nbfc,newReq.amt,'NEFT',typ,spoc,dept,rmk,mgEmail,ccEmail,'Pending',appIdFileData?appIdFileData.name:'None','','']);
-  await syncSheetBatch(allRows);
-
-  const firstReq=createdRequests[0];
-  const requestIds=createdRequests.map(r=>r.id).join(', ');
-  const approvalThreadKey='REQUESTS|'+createdRequests.map(r=>r.id).join('|');
-  createdRequests.forEach(r=>r.threadKey=approvalThreadKey);
-  save();
-  const siteUrl=location.origin+location.pathname;
-  const authParam=encodeURIComponent(mgEmail);
-  const batchToken=actionToken('BATCH|'+requestIds,mgEmail);
-  const idsParam=encodeURIComponent(requestIds);
-  const approveLink=`${siteUrl}?act=approve&ids=${idsParam}&a=${authParam}&t=${batchToken}`;
-  const rejectLink=`${siteUrl}?act=reject&ids=${idsParam}&a=${authParam}&t=${batchToken}`;
-  const requestRows=createdRequests.map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.id)}</td><td style="padding:7px;border-bottom:1px solid #eee">${escapeHtml(r.appId)}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:right">₹${r.amt.toLocaleString('en-IN')}</td></tr>`).join('');
-  const subject=createdRequests.length===1
-    ? `Loan Closure Approval – App ID ${firstReq.appId}`
-    : `Loan Closure Approval – ${createdRequests.length} App IDs (${firstReq.id} to ${createdRequests[createdRequests.length-1].id})`;
-  const totalAmount=createdRequests.reduce((sum,r)=>sum+r.amt,0);
-  const htmlBody=`<div style="font-family:Arial,sans-serif;max-width:680px;margin:0 auto;border:1px solid #eaeaea;border-radius:12px;overflow:hidden">
-    <div style="background:#007FFF;color:#fff;padding:18px 24px">
-      <h2 style="margin:0;font-size:18px">Loan Closure Approval Request</h2>
-      <p style="margin:4px 0 0;font-size:13px;opacity:0.9">${createdRequests.length} request(s): ${requestIds}</p>
-    </div>
-    <div style="padding:24px;background:#fff">
-      <p style="font-size:14px;color:#333">Dear Approver,<br/>A new loan closure shortfall approval request has been raised by <b>${escapeHtml(spoc)}</b>.</p>
-      <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:6px 0;color:#888">Total Requests:</td><td style="font-weight:600">${createdRequests.length}</td></tr>
-        <tr><td style="padding:6px 0;color:#888">Total Amount:</td><td style="font-weight:700;color:#007FFF">₹${totalAmount.toLocaleString('en-IN')}</td></tr>
-        <tr><td style="padding:6px 0;color:#888">NBFC:</td><td>${escapeHtml(nbfc)}</td></tr>
-        <tr><td style="padding:6px 0;color:#888">Type:</td><td>${escapeHtml(typ)}</td></tr>
-        <tr><td style="padding:6px 0;color:#888">Department:</td><td>${escapeHtml(dept)}</td></tr>
-        <tr><td style="padding:6px 0;color:#888">Approval Authority:</td><td><b>${escapeHtml(mgrNames[mgEmail]||mgEmail)}</b></td></tr>
-        <tr><td style="padding:6px 0;color:#888">Remarks:</td><td>${escapeHtml(rmk)}</td></tr>
-      </table>
-      <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:12px"><thead><tr style="background:#f7f7f5"><th style="padding:7px;text-align:left">Request</th><th style="padding:7px;text-align:left">App ID</th><th style="padding:7px;text-align:right">Amount</th></tr></thead><tbody>${requestRows}</tbody></table>
-      <div style="text-align:center;margin:20px 0 8px"><a href="${approveLink}" style="display:inline-block;background:#16a34a;color:#fff;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:700;margin-right:8px">✓ APPROVE ALL (${createdRequests.length})</a><a href="${rejectLink}" style="display:inline-block;background:#dc2626;color:#fff;padding:11px 24px;border-radius:8px;text-decoration:none;font-weight:700">✕ REJECT ALL (${createdRequests.length})</a></div>
-      <p style="font-size:11px;color:#777;text-align:center;margin:14px 0 0">One action applies to all requests in this email. Each Excel row is stored individually in the Google Sheet. Duplicate App IDs are allowed.</p>
-    </div>
-  </div>`;
-  const textBody=`Approval Requests: ${requestIds}\n\nApp ID / Amount:\n${createdRequests.map(r=>r.appId+' — ₹'+r.amt).join('\n')}\n\nTotal Amount: ₹${totalAmount}\nNBFC: ${nbfc}\nType: ${typ}\nRemarks: ${rmk}`;
-
-  // Always keep the SPOC (the person who raised it) in CC, merged with any CC they chose.
-  const approvalCc=[ccEmail,spoc].map(x=>String(x||'').trim().toLowerCase()).filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i).join(',');
-  await sendGmail(mgEmail, approvalCc, subject, htmlBody, textBody, appIdFileData, approvalThreadKey);
-
-  tokOk.textContent=`${createdRequests.length} request(s) submitted successfully! App IDs and their amounts were added to the Sheet, including duplicates.`;
-  tokOk.style.display='block';
-
-  document.getElementById('appId').value='';
-  document.getElementById('amt').value='';
-  document.getElementById('rmk').value='';
-  clearAppIdFile();
-  upd();
-  updBadge();
-
-  sbtn.disabled=false; sbtn.innerHTML='<i class="ti ti-send"></i> Submit for Approval';
-}
-
-async function sendEmail(to, cc, subject, htmlBody, textBody, attachment, threadKey){
-  if(!isGASConfigured()) return false;
-  try{
-    const payload={to, cc:cc||'', subject, html:htmlBody||'', text:textBody||''};
-    if(threadKey) payload.threadKey=threadKey;
-    if(attachment&&attachment.base64){
-      payload.attachment={
-        name:attachment.name||'attachment.xlsx',
-        mimeType:attachment.mimeType||'application/octet-stream',
-        base64:attachment.base64
-      };
+    const ids=res.requestIds||[];
+    const idText=ids.length>3?`${ids[0]} to ${ids[ids.length-1]}`:ids.join(', ');
+    const authorityName=mgrNames[mgEmail]||mgEmail;
+    const problems=[];
+    if(res.emailSent){
+      tokOk.textContent=`✓ ${ids.length} request(s) submitted (${idText}). Approval email sent to ${authorityName}; you are in CC.`;
+      sync('Saved to Sheet ✓ · Email sent ✓','ok');
+    }else{
+      tokOk.textContent=`✓ ${ids.length} request(s) saved to the Sheet (${idText}).`;
+      problems.push('Approval email could not be sent: '+(res.emailError||'unknown error'));
+      sync('Saved to Sheet ✓ · Email failed','f');
     }
-    const res=await fetch(GAS_URL,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify(payload)
-    });
-    const txt=await res.text();
-    return txt.includes('SENT')||txt.includes('REPLIED')||txt.includes('sent');
-  }catch(e){return false;}
-}
-async function sendGmail(to, cc, subject, htmlBody, textBody, attachment, threadKey){
-  return sendEmail(to, cc, subject, htmlBody, textBody, attachment, threadKey);
-}
+    (res.warnings||[]).forEach(w=>problems.push(w));
+    tokOk.style.display='block';
+    if(problems.length){ tokErr.textContent=problems.join(' · '); tokErr.style.display='block'; }
 
-async function syncSheet(row){
-  sync('Saving locally…','p');
-  if(isGASConfigured()){
-    try{
-      const res=await fetch(GAS_URL,{
-        method:'POST',
-        headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({action:'appendSheet',sheetId:SHEET_ID,tab:SHEET_TAB,headers:SHEET_HEADERS,row})
-      });
-      const txt=await res.text();
-      if(txt.includes('APPENDED')||txt.includes('OK'))sync('Synced to Sheet ✓','ok');
-      else sync('Saved locally','ok');
-    }catch(e){sync('Saved locally','ok');}
-  } else {
-    sync('Saved locally','ok');
-  }
-}
-
-// Append many rows in ONE request (fast bulk upload). Falls back to per-row only if needed.
-async function syncSheetBatch(rows){
-  if(!Array.isArray(rows)||!rows.length)return;
-  sync('Saving to Sheet…','p');
-  if(!isGASConfigured()){ sync('Saved locally','ok'); return; }
-  try{
-    const res=await fetch(GAS_URL,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'appendSheetBatch',sheetId:SHEET_ID,tab:SHEET_TAB,headers:SHEET_HEADERS,rows})
-    });
-    const txt=await res.text();
-    if(txt.includes('APPENDED')||txt.includes('OK')){ sync('Synced to Sheet ✓','ok'); return; }
-    // If the backend doesn't know appendSheetBatch yet, fall back to per-row append.
-    for(const row of rows){ await syncSheet(row); }
+    document.getElementById('appId').value='';
+    document.getElementById('amt').value='';
+    document.getElementById('rmk').value='';
+    clearAppIdFile();
+    upd();
   }catch(e){
-    for(const row of rows){ await syncSheet(row); }
+    fail('Submission failed: '+e.message);
+    sync('Not submitted','f');
+  }finally{
+    sbtn.disabled=false;
+    sbtn.innerHTML='<i class="ti ti-send"></i> Submit for Approval';
   }
-}
-
-async function syncSheetStatus(requestId, status, actionDate, rejectReason){
-  if(!isGASConfigured())return false;
-  try{
-    const res=await fetch(GAS_URL,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'updateStatus',sheetId:SHEET_ID,tab:SHEET_TAB,requestId,status,actionDate,rejectReason:rejectReason||''})
-    });
-    const txt=await res.text();
-    return txt.includes('UPDATED');
-  }catch(e){return false;}
 }
 
 function sync(msg,type){
   const el=document.getElementById('syncst');
   const cls=type==='ok'?'sok':type==='p'?'sp':'sf';
-  el.innerHTML=`<span class="sdot ${cls}"></span>${msg}`;
+  el.innerHTML=`<span class="sdot ${cls}"></span>${escapeHtml(msg)}`;
 }
 
 function showSetupModal(){
@@ -1384,7 +1335,7 @@ function showSetupModal(){
     <div style="background:#fff;border-radius:16px;padding:2rem;max-width:500px;width:100%;text-align:left">
       <div style="font-size:16px;font-weight:700;color:#111;margin-bottom:8px">⚙️ Google Apps Script Configuration</div>
       <p style="font-size:13px;color:#555;margin-bottom:12px">Enter your deployed Apps Script Web App URL below:</p>
-      <input id="gas-url-input" type="url" placeholder="https://script.google.com/macros/s/.../exec" value="${GAS_URL}" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;box-sizing:border-box"/>
+      <input id="gas-url-input" type="url" placeholder="https://script.google.com/macros/s/.../exec" value="${escapeHtml(GAS_URL)}" style="width:100%;font-size:13px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;box-sizing:border-box"/>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button onclick="document.getElementById('setup-modal').remove()" style="background:#f0f0ec;border:none;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;font-weight:600">Close</button>
         <button onclick="saveGASFromModal()" style="background:#007FFF;color:#fff;border:none;border-radius:999px;padding:9px 16px;font-size:13px;cursor:pointer;font-weight:600">Save URL</button>
@@ -1401,14 +1352,14 @@ function saveGASFromModal(){
   alert('Email Setup URL saved successfully!');
 }
 
+/* ==========================================================
+ * DASHBOARD
+ * ========================================================== */
 let dashFStatus='Pending';
-let chartMonthly=null, chartAmount=null, chartStatus=null, chartAuthority=null, chartDepartment=null;
-let processingActions=new Set();
-
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function getRequestYear(r){
-  const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
   return m?Number(m[3]):null;
 }
 
@@ -1422,10 +1373,8 @@ function populateYearFilter(){
   if(years.includes(Number(previous))) sel.value=previous;
 }
 function dashFilter(v){dashFStatus=v;renderDash();}
-function destroyChart(c){if(c){try{c.destroy();}catch(e){}}}
 
-// Lightweight native canvas charts. This avoids the dashboard becoming blank
-// when the external Chart.js asset is unavailable on GitHub Pages.
+// Lightweight native canvas charts (no external chart library needed).
 function setupCanvas(id){
   const canvas=document.getElementById(id);
   if(!canvas)return null;
@@ -1522,8 +1471,7 @@ function requestMatchesSearch(r,q){
 }
 function requestAgeMinutes(r){
   if(!r || r.status!=='Pending')return 0;
-  const raw=`${r.date||''} ${r.time||''}`.trim();
-  const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
   if(!m)return 0;
   const [day,month,year]=[Number(m[1]),Number(m[2]),Number(m[3])];
   const tm=String(r.time||'').match(/(\d{1,2}):(\d{2})(?:\s*(AM|PM))?/i);
@@ -1572,7 +1520,7 @@ function renderDashboardCharts(year, sourceData=null){
   const data=sourceData||reqs.filter(r=>getRequestYear(r)===yr);
   const monthly=MONTHS.map(()=>({approved:0,pending:0,rejected:0,amount:0}));
   data.forEach(r=>{
-    const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    const m=String(r.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
     if(!m)return;
     const idx=Number(m[2])-1;if(idx<0||idx>11)return;
     if(r.status==='Approved'){monthly[idx].approved++;monthly[idx].amount+=Number(r.amt)||0;}
@@ -1645,12 +1593,13 @@ function renderDash(){
   const list=document.getElementById('d-list');
   document.getElementById('d-result-count').textContent=`${data.length} request${data.length===1?'':'s'}`;
   if(!data.length){list.innerHTML='<div class="empty"><i class="ti ti-search-off" style="font-size:36px;display:block;margin-bottom:8px"></i>No requests match the selected filters.</div>';return;}
-  list.innerHTML=[...data].sort((a,b)=>String(b.id).localeCompare(String(a.id))).map(r=>{
+  const reqNo=id=>{const m=String(id||'').match(/(\d+)$/);return m?Number(m[1]):0;};
+  list.innerHTML=[...data].sort((a,b)=>reqNo(b.id)-reqNo(a.id)).map(r=>{
     const age=r.status==='Pending'?requestAgeMinutes(r):0;
     return `<div class="card" style="border-left:3px solid ${r.status==='Pending'?'#f59e0b':r.status==='Approved'?'#22c55e':'#ef4444'}">
       <div class="ch">
         <div><div class="ct">${escapeHtml(r.id)} · App ID: ${escapeHtml(r.appId)}</div><div class="cs">${escapeHtml(r.date)} ${escapeHtml(r.time)} · SPOC: <strong>${escapeHtml(r.spoc)}</strong></div></div>
-        <span class="badge b-${String(r.status||'').toLowerCase()}">${escapeHtml(r.status)}</span>
+        <span class="badge b-${escapeHtml(String(r.status||'').toLowerCase())}">${escapeHtml(r.status)}</span>
       </div>
       <div class="cmeta">
         <div><div class="ml">NBFC</div><div class="mv">${escapeHtml(r.nbfc)}</div></div>
@@ -1677,10 +1626,12 @@ function clearDashboardFilters(){
 async function refreshDashboard(){
   const el=document.getElementById('dash-sync');
   if(el)el.innerHTML='<span class="sdot sp"></span>Syncing…';
-  await loadRequestsFromSheet(true);
+  const ok=await loadRequestsFromSheet(true);
   populateDashboardFilters();
   renderDash();
-  if(el)el.innerHTML='<span class="sdot sok"></span>Synced '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  if(el)el.innerHTML=ok
+    ?'<span class="sdot sok"></span>Synced '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})
+    :'<span class="sdot sf"></span>Sync failed';
 }
 function csvEscape(v){
   const s=String(v??'').replace(/"/g,'""');
@@ -1694,7 +1645,7 @@ function exportDashboardCSV(){
     r.id,r.date,r.time,r.appId,r.nbfc,r.amt,r.typ,r.spoc,r.dept||'',
     mgrNames[r.mgEmail]||r.mgEmail||'',r.ccEmail||'',r.status||'',r.actionDate||'',r.rejectComment||''
   ]);
-  const csv=[headers,...rows].map(row=>row.map(csvEscape).join(',')).join('\\r\\n');
+  const csv='﻿'+[headers,...rows].map(row=>row.map(csvEscape).join(',')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -1706,7 +1657,7 @@ function exportDashboardCSV(){
 window.addEventListener('resize',()=>{
   const dash=document.getElementById('p-dash');
   if(dash&&dash.classList.contains('active')){
-    renderDashboardCharts(Number(document.getElementById('dash-year')?.value)||new Date().getFullYear());
+    renderDashboardCharts(Number(document.getElementById('dash-year')?.value)||new Date().getFullYear(),getDashboardFilteredRequests());
   }
 });
 </script>
