@@ -2,7 +2,7 @@
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="2026.10.19-v3.2-form-order">
+<meta name="app-version" content="2026.10.21-v5.1-type-rules">
 <title>Loan Closure Approval System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
@@ -160,7 +160,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
     <img src="data:image/svg+xml;utf8,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;48&#39; height=&#39;48&#39; viewBox=&#39;0 0 48 48&#39;&gt;&lt;circle cx=&#39;24&#39; cy=&#39;24&#39; r=&#39;24&#39; fill=&#39;%23007FFF&#39;/&gt;&lt;text x=&#39;50%25&#39; y=&#39;55%25&#39; font-size=&#39;20&#39; font-weight=&#39;bold&#39; fill=&#39;white&#39; dominant-baseline=&#39;middle&#39; text-anchor=&#39;middle&#39; font-family=&#39;Arial&#39;&gt;GQ&lt;/text&gt;&lt;/svg&gt;" alt="GrayQuest" id="gq-logo-header" style="width:48px;height:48px;border-radius:50%;flex-shrink:0">
     <div>
       <h1><i class="ti ti-file-check" style="vertical-align:-3px;margin-right:6px"></i>Loan Closure Approval System</h1>
-      <p id="hdr-sheet-line" style="display:none">Parent Support · Auto-sync to &nbsp;<a href="https://docs.google.com/spreadsheets/d/1Z18Szl3I6agGvAnfPKrkxBLG0b8X9sNoobskVPgnRWQ/edit" target="_blank" style="color:#007FFF;text-decoration:none;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> &nbsp;·&nbsp; <span id="email-setup-link" class="admin-only" onclick="showSetupModal()" style="color:#b45309;cursor:pointer;font-weight:700;font-size:12px;align-items:center;gap:4px">⚙️ Email Setup</span></p>
+      <p id="hdr-sheet-line" style="display:none">Parent Support · Auto-sync to &nbsp;<a id="hdr-sheet-link" href="#" target="_blank" style="color:#007FFF;text-decoration:none;font-weight:600">🪐 Loan Closure Approval System Sheet ↗</a> &nbsp;·&nbsp; <span id="email-setup-link" class="admin-only" onclick="showSetupModal()" style="color:#b45309;cursor:pointer;font-weight:700;font-size:12px;align-items:center;gap:4px">⚙️ Email Setup</span></p>
     </div>
   </div>
 
@@ -245,6 +245,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
           <option value="other">Other</option>
         </select>
         <input type="text" id="typOther" placeholder="Enter type (required)" style="margin-top:6px;display:none;border:1px solid #f59e0b;background:#fffbeb">
+        <div id="typeRuleNote" style="display:none;margin-top:6px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:12px;color:#1e3a8a"></div>
       </div>
       <div class="fg full"><label>Remarks / Reason for Approval</label>
         <textarea id="rmk" placeholder="Explain why manager approval is needed for this amount..."></textarea>
@@ -274,7 +275,6 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
           <option value="ranjeet@grayquest.com">Ranjeet Singh Rawat — ranjeet@grayquest.com</option>
           <option value="finance.communication@grayquest.com">GQ Finance Communication — finance.communication@grayquest.com</option>
           <option value="garvit@grayquest.com">Garvit Mathur — garvit@grayquest.com</option>
-          <option value="aashi.mehta@grayquest.com">Aashi Mehta — aashi.mehta@grayquest.com</option>
           <option value="imran.abdul@grayquest.com">Imran Abdul — imran.abdul@grayquest.com</option>
         </select>
       </div>
@@ -326,7 +326,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
         <button onclick="doPasswordLogin()" style="width:100%;background:#007FFF;color:#fff;border:none;border-radius:999px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Log In</button>
       </div>
 
-      <div style="font-size:11px;color:#aaa;margin-top:14px">Registered authorities: Aamir Khan · Neel Savla · Sakshee Thanekar · Ranjeet Singh Rawat · Finance Communication · Garvit Mathur · Aashi Mehta · Imran Abdul</div>
+      <div style="font-size:11px;color:#aaa;margin-top:14px">Approval authorities (only these can approve or reject): Aamir Khan · Neel Savla · Sakshee Thanekar · Ranjeet Singh Rawat · GQ Finance Communication · Garvit Mathur · Imran Abdul</div>
     </div>
   </div>
 
@@ -466,11 +466,14 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
 /* ==========================================================
  * CONFIG
  * ========================================================== */
-const DEFAULT_GAS_URL='https://script.google.com/macros/s/AKfycbz2AzpHyGle7RAgBncysp_KQpVQapVFoF6So20Oo4c5UEXMY1XLl6ty_GaFjUfne5P3/exec';
+const DEFAULT_GAS_URL='https://script.google.com/macros/s/AKfycbyozW17H5gB9wZtsz7jnIzB3VryqsqXtBscpSc9Kh1lqWWVsay6_XyYmUI_U69IE6Jf/exec';
 let GAS_URL=(DEFAULT_GAS_URL||'').trim();
 if(!GAS_URL){ try{ GAS_URL=localStorage.getItem('lc_gas_url')||''; }catch(e){} }
 function saveGASUrl(url){ GAS_URL=url.trim(); try{localStorage.setItem('lc_gas_url',GAS_URL);}catch(e){} }
-function isGASConfigured(){ return !!GAS_URL && GAS_URL.startsWith('https://script.google.com'); }
+// True when this page is served by Apps Script (doGet). Then the server is called
+// directly with google.script.run and GAS_URL is not needed.
+const IN_APPS_SCRIPT=!!(typeof google!=='undefined'&&google.script&&google.script.run);
+function isGASConfigured(){ return IN_APPS_SCRIPT || (!!GAS_URL && GAS_URL.startsWith('https://script.google.com')); }
 
 let reqs=[],mails=[],fStatus='all',currentIdentity='';
 const processingActions=new Set();
@@ -483,7 +486,6 @@ const mgrNames={
   'ranjeet@grayquest.com'              :'Ranjeet Singh Rawat',
   'finance.communication@grayquest.com':'GQ Finance Communication',
   'garvit@grayquest.com'               :'Garvit Mathur',
-  'aashi.mehta@grayquest.com'          :'Aashi Mehta',
   'imran.abdul@grayquest.com'          :'Imran Abdul'
 };
 
@@ -506,12 +508,23 @@ function isAdmin(identity){ return ADMIN_EMAILS.includes(String(identity||'').to
 function canAct(identity,assigned){
   identity=String(identity||'').trim().toLowerCase();
   assigned=String(assigned||'').trim().toLowerCase();
-  if(!identity)return false;
-  if(isAdmin(identity))return true;
+  if(!identity||!assigned)return false;
+  if(!isApprovalAuthority(identity))return false;
   if(identity===assigned)return true;
   return (GROUP_AUTHORITIES[assigned]||[]).includes(identity);
 }
 function isMine(req,identity){ return canAct(identity,req.mgEmail); }
+
+// Real Google account of the person using the page (sent by the server).
+let viewerEmail='';
+// Returns an error message if the signed-in Google account may not approve/reject these requests.
+function approverError(list){
+  if(!viewerEmail) return 'Please log in as the approval authority to approve or reject.';
+  const blocked=(list||[]).filter(r=>!canAct(viewerEmail,r.mgEmail));
+  if(!blocked.length) return '';
+  const names=[...new Set(blocked.map(r=>mgrNames[r.mgEmail]||r.mgEmail))].join(', ');
+  return `Only ${names} can approve or reject this request. You are logged in as ${viewerEmail}.`;
+}
 
 function autoSelectAuthority(dept){
   const sel=document.getElementById('mgEmail');
@@ -525,6 +538,8 @@ function autoSelectAuthority(dept){
  * text/plain body = no CORS preflight = faster.
  * ========================================================== */
 async function api(payload,timeoutMs){
+  payload=Object.assign({token:sessionToken||''},payload||{});
+  if(IN_APPS_SCRIPT) return callAppsScript(payload,timeoutMs);
   if(!isGASConfigured()) throw new Error('Apps Script URL is not configured.');
   const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
   const timer=ctrl?setTimeout(()=>ctrl.abort(),timeoutMs||90000):null;
@@ -539,7 +554,11 @@ async function api(payload,timeoutMs){
     let data;
     try{ data=JSON.parse(txt); }
     catch(e){ throw new Error('Unexpected response from Apps Script. Check that the Web App is deployed with access "Anyone".'); }
-    if(!data||data.ok===false) throw new Error((data&&data.error)||'Request failed.');
+    if(!data||data.ok===false){
+      const err=new Error((data&&data.error)||'Request failed.');
+      err.code=(data&&data.code)||'';
+      throw err;
+    }
     return data;
   }catch(e){
     if(e&&e.name==='AbortError') throw new Error('The server took too long to respond. Please refresh and check the Sheet before retrying.');
@@ -550,8 +569,50 @@ async function api(payload,timeoutMs){
   }
 }
 
-// Wake the Apps Script container early so the first submit is faster.
-function warmUpServer(){ if(isGASConfigured()) api({action:'health'},20000).catch(()=>{}); }
+// Page served by Apps Script: call apiCall() in Code.gs directly.
+function callAppsScript(payload,timeoutMs){
+  return new Promise((resolve,reject)=>{
+    let done=false;
+    const timer=setTimeout(()=>{
+      if(done)return; done=true;
+      reject(new Error('The server took too long to respond. Please refresh and check the Sheet before retrying.'));
+    },timeoutMs||90000);
+    google.script.run
+      .withSuccessHandler(data=>{
+        if(done)return; done=true; clearTimeout(timer);
+        if(!data||data.ok===false){ const err=new Error((data&&data.error)||'Request failed.'); err.code=(data&&data.code)||''; reject(err); }
+        else resolve(data);
+      })
+      .withFailureHandler(err=>{
+        if(done)return; done=true; clearTimeout(timer);
+        reject(new Error((err&&err.message)||String(err||'Server error. Please try again.')));
+      })
+      .apiCall(payload);
+  });
+}
+
+// Reads the page URL parameters (?act=...&ids=...&a=...).
+function getPageParams(){
+  return new Promise(resolve=>{
+    if(IN_APPS_SCRIPT&&google.script.url){
+      try{ google.script.url.getLocation(loc=>resolve((loc&&loc.parameter)||{})); return; }catch(e){}
+    }
+    const params={};
+    try{ new URLSearchParams(location.search).forEach((v,k)=>{params[k]=v;}); }catch(e){}
+    resolve(params);
+  });
+}
+
+// Removes ?act=... from the address bar so a refresh does not repeat the action.
+function clearPageParams(){
+  try{
+    if(IN_APPS_SCRIPT&&google.script.history) google.script.history.replace(null,{},'');
+    else history.replaceState({},document.title,location.origin+location.pathname);
+  }catch(e){}
+}
+
+// Wake the Apps Script container early so the first submit is faster (not needed when served by Apps Script).
+function warmUpServer(){ if(!IN_APPS_SCRIPT&&isGASConfigured()) api({action:'health'},20000).catch(()=>{}); }
 
 /* ==========================================================
  * EXCEL / CSV ATTACHMENT
@@ -592,7 +653,7 @@ function handleAppIdFile(input){
         items.push({appId:id,amount:parseExcelAmount(amount)});
       };
       if(ext==='csv'){
-        const text=new TextDecoder('utf-8').decode(buf).replace(/^﻿/,'');
+        const text=new TextDecoder('utf-8').decode(buf).replace(/^\uFEFF/,'');
         text.split(/\r?\n/).forEach((line,idx)=>{
           if(!line.trim())return;
           const cols=line.split(',').map(v=>String(v||'').trim().replace(/^"|"$/g,''));
@@ -672,6 +733,7 @@ function handleTypChange(val){
   const inp=document.getElementById('typOther');
   if(val==='other'){inp.style.display='block';inp.focus();}
   else{inp.style.display='none';inp.value='';}
+  refreshAuthority(false);
 }
 function getTyp(){
   const sel=document.getElementById('typ').value;
@@ -688,21 +750,59 @@ function getNbfc(){
   if(sel==='other') return document.getElementById('nbfcOther').value.trim();
   return sel;
 }
+// TYPE RULES - these request types always go to a fixed approval authority, and after
+// approval a team is added to the same email thread. Keep the same as TYPE_RULES in Code.gs.
+const TYPE_RULES=[
+  {types:['Late Payment Charges Waiver','Mandate Charges Waiver','Bounce Charges Waiver'],
+   authority:'ranjeet@grayquest.com', informTeam:'NACH Team (Pranit, Ajinkya)'},
+  {types:['Settlement Waiver'],
+   authority:'ranjeet@grayquest.com', informTeam:'Sakshee Thanekar'}
+];
+function typeRuleFor(typ){
+  const t=String(typ||'').trim().toLowerCase();
+  return TYPE_RULES.find(r=>r.types.some(x=>x.toLowerCase()===t))||null;
+}
+
 function handleDeptChange(val){
   const inp=document.getElementById('deptOther');
   if(val==='other'){inp.style.display='block';inp.focus();}
   else{inp.style.display='none';inp.value='';}
-  // For "Other" department there is no fixed authority, so let the user pick one.
+  refreshAuthority(true);
+}
+
+// Approval Authority: fixed by Type rule first, then by Department, else chosen manually ("Other").
+function refreshAuthority(deptChanged){
   const sel=document.getElementById('mgEmail');
   const hint=document.getElementById('mgEmailHint');
-  const manual=(val==='other');
-  sel.disabled=!manual;
-  sel.style.background=manual?'#fffbeb':'#f0f0ec';
-  sel.style.color=manual?'#0a0a0a':'#555';
-  sel.style.cursor=manual?'pointer':'not-allowed';
-  if(hint) hint.textContent=manual?'✎ select manually for Other department':'🔒 auto-set by Department';
-  if(manual) sel.value='';
-  else autoSelectAuthority(val);
+  const note=document.getElementById('typeRuleNote');
+  const dept=document.getElementById('department').value;
+  const rule=typeRuleFor(getTyp());
+  const lockStyle=locked=>{
+    sel.disabled=locked;
+    sel.style.background=locked?'#f0f0ec':'#fffbeb';
+    sel.style.color=locked?'#555':'#0a0a0a';
+    sel.style.cursor=locked?'not-allowed':'pointer';
+  };
+  if(rule){
+    lockStyle(true);
+    sel.value=rule.authority;
+    if(hint) hint.textContent='🔒 set by Type';
+    if(note){
+      note.innerHTML=`<i class="ti ti-info-circle"></i> <b>${escapeHtml(getTyp())}</b> is approved only by <b>${escapeHtml(mgrNames[rule.authority]||rule.authority)}</b>. After approval, <b>${escapeHtml(rule.informTeam)}</b> will be informed in the same email.`;
+      note.style.display='block';
+    }
+    return;
+  }
+  if(note) note.style.display='none';
+  if(dept==='other'){
+    lockStyle(false);
+    if(hint) hint.textContent='✎ select manually for Other department';
+    if(deptChanged||!sel.value) sel.value='';
+    return;
+  }
+  lockStyle(true);
+  if(hint) hint.textContent='🔒 auto-set by Department';
+  autoSelectAuthority(dept);
 }
 function getDept(){
   const sel=document.getElementById('department').value;
@@ -735,28 +835,27 @@ function updateAdminUI(){
   else setup.classList.remove('admin-visible');
 }
 
-window.addEventListener('load',()=>{
+window.addEventListener('load',async()=>{
   populateLoginSelect();
   updStats();
   updBadge();
   updateAdminUI();
   warmUpServer();
+  await restoreSession();
   handleEmailAction();
 });
 
 /* ==========================================================
  * APPROVE / REJECT LINKS CLICKED FROM THE EMAIL
  * ========================================================== */
-function getParam(name){
-  try{return new URLSearchParams(location.search).get(name);}catch(e){return null;}
-}
 async function handleEmailAction(){
-  const act=getParam('act');
-  const id=getParam('id');
-  const idsParam=(getParam('ids')||'').trim();
-  const linkAuth=(getParam('a')||'').trim();
+  const p=await getPageParams();
+  const act=p.act;
+  const id=p.id;
+  const idsParam=String(p.ids||'').trim();
+  const linkAuth=String(p.a||'').trim();
   if(!act||(!id&&!idsParam)) return;
-  try{history.replaceState({},document.title,location.origin+location.pathname);}catch(e){}
+  clearPageParams();
   await runEmailAction(act,id,idsParam,linkAuth);
 }
 
@@ -764,10 +863,23 @@ async function runEmailAction(act,id,idsParam,linkAuth){
   const ids=[...new Set((idsParam?idsParam.split(','):id?[id]:[]).map(x=>String(x||'').trim()).filter(Boolean))];
   if(!ids.length)return;
   linkAuth=String(linkAuth||'').trim().toLowerCase();
+  const verb=act==='reject'?'reject':'approve';
+  const authName=AUTHORITY_LIST[linkAuth]||'the approval authority';
+
+  // Only a logged-in approval authority can see and action requests.
+  if(!sessionToken){
+    const ok=await askLogin(linkAuth,`Log in as ${authName} to ${verb} ${ids.length} request(s): ${ids.join(', ')}`);
+    if(!ok){ showActionPopup('info','Only the approval authority can approve or reject. Nothing was changed.'); return; }
+  }
 
   const busy=showBusyPopup('Loading request(s)…');
-  const loaded=await loadRequestsFromSheet(true);
+  let loaded=await loadRequestsFromSheet(true);
   busy.remove();
+  if(!loaded&&!sessionToken){
+    const ok=await askLogin(linkAuth,`Your login has expired. Log in as ${authName} to ${verb} the request(s).`);
+    if(!ok){ showActionPopup('info','Only the approval authority can approve or reject. Nothing was changed.'); return; }
+    loaded=await loadRequestsFromSheet(true);
+  }
   if(!loaded){
     showActionPopup('error','Could not connect to the server to load the request(s). Please check your internet connection and open the email link again.');
     return;
@@ -779,8 +891,14 @@ async function runEmailAction(act,id,idsParam,linkAuth){
     showActionPopup('error',`Request(s) ${escapeHtml(missing.join(', '))} could not be found in the Sheet.`);
     return;
   }
-  if(!found.every(r=>canAct(linkAuth,r.mgEmail))){
-    showActionPopup('error','This approval link is not authorised for the assigned approval authority.');
+  let notAllowed=approverError(found);
+  if(notAllowed&&isApprovalAuthority(linkAuth)&&linkAuth!==viewerEmail){
+    // Logged in as someone else: offer to switch to the authority named in the link.
+    const ok=await askLogin(linkAuth,`${notAllowed} Log in as ${authName} to continue.`);
+    if(ok){ await loadRequestsFromSheet(true); notAllowed=approverError(found.map(f=>findReq(f.id)||f)); }
+  }
+  if(notAllowed){
+    showActionPopup('error',escapeHtml(notAllowed));
     return;
   }
 
@@ -792,11 +910,11 @@ async function runEmailAction(act,id,idsParam,linkAuth){
   }
   if(act==='approve'){
     const wait=showBusyPopup(`Approving ${pending.length} request(s)…`);
-    const out=await finalizeBatchInAppAction(found,'Approved','',linkAuth,ids);
+    const out=await finalizeBatchInAppAction(found,'Approved','',viewerEmail,ids);
     wait.remove();
     showActionResult(out,'Approved');
   }else if(act==='reject'){
-    promptRejectBatchComment(pending,linkAuth,ids);
+    promptRejectBatchComment(pending,viewerEmail,ids);
   }
 }
 
@@ -877,7 +995,7 @@ function showActionResult(out,action){
  * ========================================================== */
 let reqsLoadPromise=null;
 function loadRequestsFromSheet(silent){
-  if(!isGASConfigured())return Promise.resolve(false);
+  if(!isGASConfigured()||!sessionToken)return Promise.resolve(false);
   if(reqsLoadPromise)return reqsLoadPromise;
   const statusEl=document.getElementById('sync-status');
   if(statusEl&&!silent){statusEl.textContent='Syncing requests…';statusEl.style.color='#f59e0b';}
@@ -885,6 +1003,8 @@ function loadRequestsFromSheet(silent){
     try{
       const data=await api({action:'getRequests'},60000);
       reqs=Array.isArray(data.requests)?data.requests:[];
+      viewerEmail=String(data.viewer||'').trim().toLowerCase();
+      if(data.sheetUrl){ const link=document.getElementById('hdr-sheet-link'); if(link) link.href=data.sheetUrl; }
       save();
       if(statusEl){statusEl.textContent='Synced ✓';statusEl.style.color='#15803d';}
       renderReqs();
@@ -896,6 +1016,7 @@ function loadRequestsFromSheet(silent){
       }
       return true;
     }catch(e){
+      if(e.code==='LOGIN_REQUIRED'){ clearSession(); applyLoggedOut(); }
       if(statusEl){statusEl.textContent='Sync failed: '+e.message;statusEl.style.color='#dc2626';}
       return false;
     }finally{
@@ -924,80 +1045,173 @@ function updStats(){
 }
 
 /* ==========================================================
- * AUTHORITY LOGIN (client-side passwords, unchanged)
+ * AUTHORITY LOGIN - passwords are checked on the server (Code.gs).
+ * No password is stored in this page.
  * ========================================================== */
-const AUTHORITY_DEFAULTS={
-  'aamir.khan@grayquest.com'           :{name:'Aamir Khan',                 pw:'Aamir@4287'},
-  'neel.savla@grayquest.com'           :{name:'Neel Savla',                 pw:'Neel@6931'},
-  'sakshee.thanekar@grayquest.com'     :{name:'Sakshee Thanekar',           pw:'Saksh@1750'},
-  'ranjeet@grayquest.com'              :{name:'Ranjeet Singh Rawat',        pw:'Ranjeet@8354'},
-  'finance.communication@grayquest.com':{name:'GQ Finance Communication',   pw:'Finance@2609'},
-  'garvit@grayquest.com'               :{name:'Garvit Mathur',              pw:'Garvit@5473'},
-  'aashi.mehta@grayquest.com'          :{name:'Aashi Mehta',                pw:'Aashi@777'},
-  'imran.abdul@grayquest.com'          :{name:'Imran Abdul',                pw:'Imran@2026'}
+// APPROVAL AUTHORITIES - the ONLY people who can log in and approve / reject.
+// Keep this list the same as APPROVAL_AUTHORITIES in Code.gs.
+const AUTHORITY_LIST={
+  'aamir.khan@grayquest.com'           :'Aamir Khan',
+  'neel.savla@grayquest.com'           :'Neel Savla',
+  'sakshee.thanekar@grayquest.com'     :'Sakshee Thanekar',
+  'ranjeet@grayquest.com'              :'Ranjeet Singh Rawat',
+  'finance.communication@grayquest.com':'GQ Finance Communication (Admin)',
+  'garvit@grayquest.com'               :'Garvit Mathur',
+  'imran.abdul@grayquest.com'          :'Imran Abdul'
 };
+function isApprovalAuthority(email){ return Object.prototype.hasOwnProperty.call(AUTHORITY_LIST,String(email||'').trim().toLowerCase()); }
 
-let authPasswords={};
-try{ authPasswords=JSON.parse(localStorage.getItem('lc_authpw')||'{}'); }catch(e){ authPasswords={}; }
-Object.keys(AUTHORITY_DEFAULTS).forEach(email=>{
-  if(!authPasswords[email]) authPasswords[email]=AUTHORITY_DEFAULTS[email].pw;
-});
-function savePasswords(){ try{localStorage.setItem('lc_authpw',JSON.stringify(authPasswords));}catch(e){} }
-savePasswords();
+// Old versions kept passwords in the browser - remove them.
+try{ localStorage.removeItem('lc_authpw'); localStorage.removeItem('lc_authpw_2026_10_19'); }catch(e){}
+
+const SESSION_KEY='lc_session';
+let sessionToken='';
+function readSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); }catch(e){ return null; } }
+function saveSession(info){ try{ localStorage.setItem(SESSION_KEY,JSON.stringify(info)); }catch(e){} }
+function clearSession(){
+  sessionToken='';
+  try{ localStorage.removeItem(SESSION_KEY); localStorage.removeItem('lc_reqs'); }catch(e){}
+}
 
 function populateLoginSelect(){
   const sel=document.getElementById('login-email');
   if(!sel||sel.options.length>1)return;
-  Object.keys(AUTHORITY_DEFAULTS).forEach(email=>{
+  Object.keys(AUTHORITY_LIST).forEach(email=>{
     const opt=document.createElement('option');
-    opt.value=email; opt.textContent=AUTHORITY_DEFAULTS[email].name;
+    opt.value=email; opt.textContent=AUTHORITY_LIST[email];
     sel.appendChild(opt);
   });
 }
 
-function doPasswordLogin(){
-  const err=document.getElementById('login-err');
-  err.style.display='none';
-  const email=document.getElementById('login-email').value;
-  const pw=document.getElementById('login-pw').value;
-  if(!email){ err.textContent='Please select your name.'; err.style.display='block'; return; }
-  if(!pw){ err.textContent='Please enter your password.'; err.style.display='block'; return; }
-  if(authPasswords[email]!==pw){
-    err.textContent='Incorrect password. Please try again.';
-    err.style.display='block';
-    return;
-  }
+// Shows the logged-in screens for a server-verified authority.
+function applyLoggedIn(info){
+  const email=String(info.email||'').toLowerCase();
   currentIdentity=email;
+  viewerEmail=email;
   document.getElementById('tab-mgr').style.display='';
   document.getElementById('tab-dash').style.display='';
   document.getElementById('tab-login').style.display='none';
   document.getElementById('tab-logout').style.display='';
   document.getElementById('hdr-sheet-line').style.display='';
-  document.getElementById('logged-name').textContent='✓ '+(mgrNames[email]||AUTHORITY_DEFAULTS[email].name||email);
+  document.getElementById('logged-name').textContent='✓ '+(AUTHORITY_LIST[email]||info.name||email);
   document.getElementById('logged-email').textContent=email;
-  document.getElementById('login-pw').value='';
   const adminBadge=document.getElementById('admin-badge');
   const adminBtn=document.getElementById('btn-admin-pw');
   updateAdminUI();
-  if(isAdmin(email)){
+  if(info.isAdmin){
     if(adminBadge)adminBadge.style.display='inline-block';
     if(adminBtn)adminBtn.style.display='';
     populateAdminPwTarget();
-  } else {
+  }else{
     if(adminBadge)adminBadge.style.display='none';
     if(adminBtn)adminBtn.style.display='none';
   }
-  go('mgr');
 }
 
-function doLogout(){
+function applyLoggedOut(){
   currentIdentity='';
+  viewerEmail='';
+  reqs=[];
   updateAdminUI();
   document.getElementById('tab-mgr').style.display='none';
   document.getElementById('tab-dash').style.display='none';
   document.getElementById('tab-logout').style.display='none';
   document.getElementById('tab-login').style.display='';
   document.getElementById('hdr-sheet-line').style.display='none';
+  updBadge();
+}
+
+async function loginRequest(email,password){
+  const res=await api({action:'login',email,password},30000);
+  sessionToken=res.token;
+  saveSession({token:res.token,email:res.email,name:res.name,isAdmin:!!res.isAdmin});
+  applyLoggedIn(res);
+  return res;
+}
+
+// Keeps the login after a page refresh (the server decides if it is still valid).
+async function restoreSession(){
+  const saved=readSession();
+  if(!saved||!saved.token) return false;
+  sessionToken=saved.token;
+  try{
+    const res=await api({action:'session'},20000);
+    applyLoggedIn(res);
+    return true;
+  }catch(e){
+    if(e.code==='LOGIN_REQUIRED'){ clearSession(); applyLoggedOut(); }
+    else{ applyLoggedIn(saved); }   // offline: the server will still check every action
+    return !!sessionToken;
+  }
+}
+
+async function doPasswordLogin(){
+  const err=document.getElementById('login-err');
+  err.style.display='none';
+  const email=document.getElementById('login-email').value;
+  const pw=document.getElementById('login-pw').value;
+  if(!email){ err.textContent='Please select your name.'; err.style.display='block'; return; }
+  if(!pw){ err.textContent='Please enter your password.'; err.style.display='block'; return; }
+  if(!isApprovalAuthority(email)){ err.textContent='Only registered approval authorities can log in.'; err.style.display='block'; return; }
+  try{
+    await loginRequest(email,pw);
+    document.getElementById('login-pw').value='';
+    go('mgr');
+  }catch(e){
+    err.textContent=e.message||'Login failed. Please try again.';
+    err.style.display='block';
+  }
+}
+
+// Login popup used by the Approve / Reject email links. Resolves true when logged in.
+function askLogin(prefEmail,message){
+  return new Promise(resolve=>{
+    const modal=document.createElement('div');
+    modal.className='modal-ov';
+    const opts=Object.keys(AUTHORITY_LIST).map(e=>`<option value="${escapeHtml(e)}"${e===prefEmail?' selected':''}>${escapeHtml(AUTHORITY_LIST[e])}</option>`).join('');
+    modal.innerHTML=`
+      <div class="modal-box" style="text-align:left">
+        <div style="font-size:16px;font-weight:700;color:#111;margin-bottom:6px"><i class="ti ti-lock"></i> Approval Authority Login</div>
+        <div style="font-size:13px;color:#555;margin-bottom:12px">${escapeHtml(message)}</div>
+        <div id="ask-login-err" class="toast td" style="text-align:left"></div>
+        <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase">Your Name</label>
+        <select id="ask-login-email" style="width:100%;margin:4px 0 10px">${opts}</select>
+        <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase">Password</label>
+        <input id="ask-login-pw" type="password" placeholder="Enter your password" style="width:100%;margin-top:4px">
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button id="ask-login-cancel" style="flex:1;background:#f0f0ec;border:none;border-radius:8px;padding:9px;font-size:13px;cursor:pointer;font-weight:600">Cancel</button>
+          <button id="ask-login-ok" style="flex:1;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;cursor:pointer;font-weight:700">Log In</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    const pw=modal.querySelector('#ask-login-pw');
+    const errEl=modal.querySelector('#ask-login-err');
+    const okBtn=modal.querySelector('#ask-login-ok');
+    const finish=v=>{ modal.remove(); resolve(v); };
+    const submit=async()=>{
+      errEl.style.display='none';
+      const email=modal.querySelector('#ask-login-email').value;
+      if(!pw.value){ errEl.textContent='Please enter your password.'; errEl.style.display='block'; return; }
+      okBtn.disabled=true; okBtn.textContent='Checking…';
+      try{
+        await loginRequest(email,pw.value);
+        finish(true);
+      }catch(e){
+        errEl.textContent=e.message||'Login failed.'; errEl.style.display='block';
+        okBtn.disabled=false; okBtn.textContent='Log In';
+      }
+    };
+    okBtn.onclick=submit;
+    pw.addEventListener('keydown',e=>{ if(e.key==='Enter') submit(); });
+    modal.querySelector('#ask-login-cancel').onclick=()=>finish(false);
+    setTimeout(()=>pw.focus(),50);
+  });
+}
+
+function doLogout(){
+  if(sessionToken) api({action:'logout'},15000).catch(()=>{});
+  clearSession();
+  applyLoggedOut();
   go('raise');
 }
 
@@ -1007,29 +1221,33 @@ function toggleChangePw(){
   box.style.display=(box.style.display==='none'||!box.style.display)?'block':'none';
 }
 
-function submitChangePassword(){
+async function submitChangePassword(){
   const errEl=document.getElementById('chpw-err');
   const okEl=document.getElementById('chpw-ok');
   errEl.style.display='none'; okEl.style.display='none';
   const cur=document.getElementById('chpw-current').value;
   const nw=document.getElementById('chpw-new').value;
   const cf=document.getElementById('chpw-confirm').value;
-  if(authPasswords[currentIdentity]!==cur){ errEl.textContent='Current password is incorrect.'; errEl.style.display='block'; return; }
+  if(!cur){ errEl.textContent='Please enter your current password.'; errEl.style.display='block'; return; }
   if(nw.length<6){ errEl.textContent='New password must be at least 6 characters.'; errEl.style.display='block'; return; }
   if(nw!==cf){ errEl.textContent='New password and confirmation do not match.'; errEl.style.display='block'; return; }
-  authPasswords[currentIdentity]=nw;
-  savePasswords();
-  okEl.textContent='Password updated successfully.';
-  okEl.style.display='block';
-  setTimeout(()=>{ document.getElementById('chpw-box').style.display='none'; },1500);
+  try{
+    await api({action:'changePassword',current:cur,newPassword:nw},30000);
+    ['chpw-current','chpw-new','chpw-confirm'].forEach(id=>{document.getElementById(id).value='';});
+    okEl.textContent='Password updated. Use the new password next time you log in.';
+    okEl.style.display='block';
+    setTimeout(()=>{ document.getElementById('chpw-box').style.display='none'; },2000);
+  }catch(e){
+    errEl.textContent=e.message; errEl.style.display='block';
+  }
 }
 
 function populateAdminPwTarget(){
   const sel=document.getElementById('adminpw-target');
   if(!sel||sel.options.length)return;
-  Object.keys(AUTHORITY_DEFAULTS).forEach(email=>{
+  Object.keys(AUTHORITY_LIST).forEach(email=>{
     const opt=document.createElement('option');
-    opt.value=email; opt.textContent=AUTHORITY_DEFAULTS[email].name+' — '+email;
+    opt.value=email; opt.textContent=AUTHORITY_LIST[email]+' — '+email;
     sel.appendChild(opt);
   });
 }
@@ -1038,18 +1256,22 @@ function toggleAdminPw(){
   if(!box)return;
   box.style.display=(box.style.display==='none'||!box.style.display)?'block':'none';
 }
-function submitAdminPasswordReset(){
+async function submitAdminPasswordReset(){
   const errEl=document.getElementById('adminpw-err');
   const okEl=document.getElementById('adminpw-ok');
   errEl.style.display='none'; okEl.style.display='none';
   const target=document.getElementById('adminpw-target').value;
   const nw=document.getElementById('adminpw-new').value;
   if(!target||nw.length<6){ errEl.textContent='Select authority and enter min 6 characters.'; errEl.style.display='block'; return; }
-  authPasswords[target]=nw;
-  savePasswords();
-  okEl.textContent='Password reset successfully.';
-  okEl.style.display='block';
-  setTimeout(()=>{ document.getElementById('adminpw-box').style.display='none'; },1500);
+  try{
+    await api({action:'resetPassword',target,newPassword:nw},30000);
+    document.getElementById('adminpw-new').value='';
+    okEl.textContent='Password reset for '+(AUTHORITY_LIST[target]||target)+'.';
+    okEl.style.display='block';
+    setTimeout(()=>{ document.getElementById('adminpw-box').style.display='none'; },2000);
+  }catch(e){
+    errEl.textContent=e.message; errEl.style.display='block';
+  }
 }
 
 /* ==========================================================
@@ -1126,6 +1348,11 @@ function inAppApprove(id){
     showActionPopup('error','You are not the assigned approval authority for this request.');
     return;
   }
+  const notAllowed=approverError([req]);
+  if(notAllowed){
+    showActionPopup('error',escapeHtml(notAllowed));
+    return;
+  }
   finalizeBatchInAppAction([req],'Approved','',currentIdentity);
 }
 
@@ -1138,6 +1365,11 @@ function inAppReject(id){
   }
   if(!canAct(currentIdentity,req.mgEmail)){
     showActionPopup('error','You are not the assigned approval authority for this request.');
+    return;
+  }
+  const notAllowed=approverError([req]);
+  if(notAllowed){
+    showActionPopup('error',escapeHtml(notAllowed));
     return;
   }
   promptRejectComment(req);
@@ -1201,8 +1433,7 @@ async function finalizeBatchInAppAction(reqList,action,comment,actor,allIds){
       action:'actionRequests',
       ids,
       status:action,
-      rejectReason:comment||'',
-      actor:String(actor||currentIdentity||'').toLowerCase()
+      rejectReason:comment||''
     },120000);
     applyActionResult(res,comment);
     const n=(res.updated||[]).length;
@@ -1211,6 +1442,7 @@ async function finalizeBatchInAppAction(reqList,action,comment,actor,allIds){
     else mgrToast('warn','No request was updated. '+(res.skipped||[]).map(s=>s.id+': '+(s.reason||s.status)).join('; '));
     return {ok:true,res};
   }catch(e){
+    if(e.code==='LOGIN_REQUIRED'){ clearSession(); applyLoggedOut(); }
     mgrToast('err','Action failed: '+e.message);
     return {ok:false,error:e.message};
   }finally{
@@ -1293,7 +1525,8 @@ async function raise(){
 
     const ids=res.requestIds||[];
     const idText=ids.length>3?`${ids[0]} to ${ids[ids.length-1]}`:ids.join(', ');
-    const authorityName=mgrNames[mgEmail]||mgEmail;
+    const usedAuthority=(res.requests&&res.requests[0]&&res.requests[0].mgEmail)||mgEmail;
+    const authorityName=mgrNames[usedAuthority]||usedAuthority;
     const problems=[];
     if(res.emailSent){
       tokOk.textContent=`✓ ${ids.length} request(s) submitted (${idText}). Approval email sent to ${authorityName}; you are in CC.`;
@@ -1647,7 +1880,7 @@ function exportDashboardCSV(){
     r.id,r.date,r.time,r.appId,r.nbfc,r.amt,r.typ,r.spoc,r.dept||'',
     mgrNames[r.mgEmail]||r.mgEmail||'',r.ccEmail||'',r.status||'',r.actionDate||'',r.rejectComment||''
   ]);
-  const csv='﻿'+[headers,...rows].map(row=>row.map(csvEscape).join(',')).join('\r\n');
+  const csv='\uFEFF'+[headers,...rows].map(row=>row.map(csvEscape).join(',')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
