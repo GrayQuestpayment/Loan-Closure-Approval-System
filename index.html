@@ -2,7 +2,7 @@
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="2026.10.21-v5.1-type-rules">
+<meta name="app-version" content="2026.10.28-v5.2-admin-popups-nach">
 <title>Loan Closure Approval System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
@@ -150,6 +150,15 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
 #email-setup-link{display:none!important}
 .admin-only{display:none!important}
 .admin-only.admin-visible{display:inline-flex!important}
+
+/* ===== v5.2 additions ===== */
+.field-error{border-color:#dc2626!important;box-shadow:0 0 0 3px rgba(220,38,38,.12)!important;background:#fef2f2!important}
+.popup-list{text-align:left;display:inline-block;margin:10px 0 0;padding-left:18px;font-size:14px;color:#b91c1c}
+.popup-list li{margin:3px 0}
+.popup-title{font-size:17px;font-weight:700;color:#0f172a;margin-bottom:6px}
+.server-outdated{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:12px;padding:12px 16px;font-size:13px;margin-bottom:14px;line-height:1.5}
+.btn-approve-all{background:#15803d;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700;color:#fff}
+.btn-approve-all:disabled{opacity:.5;cursor:default}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -392,6 +401,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
         </div>
         <div style="display:flex;gap:10px;align-items:center">
           <span id="sync-status" style="font-size:12px;color:#888"></span>
+          <button id="btn-approve-all" class="btn-approve-all" onclick="adminApproveAllPending()" style="display:none"><i class="ti ti-checks"></i> Approve All Pending</button>
           <button onclick="loadRequestsFromSheet()" style="background:#007FFF;border:none;border-radius:7px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;color:#fff"><i class="ti ti-refresh"></i> Refresh</button>
         </div>
       </div>
@@ -510,6 +520,7 @@ function canAct(identity,assigned){
   assigned=String(assigned||'').trim().toLowerCase();
   if(!identity||!assigned)return false;
   if(!isApprovalAuthority(identity))return false;
+  if(isAdmin(identity))return true;   // v5.2: Admin can approve / reject every request (checked again on the server)
   if(identity===assigned)return true;
   return (GROUP_AUTHORITIES[assigned]||[]).includes(identity);
 }
@@ -555,7 +566,10 @@ async function api(payload,timeoutMs){
     try{ data=JSON.parse(txt); }
     catch(e){ throw new Error('Unexpected response from Apps Script. Check that the Web App is deployed with access "Anyone".'); }
     if(!data||data.ok===false){
-      const err=new Error((data&&data.error)||'Request failed.');
+      let msg=(data&&data.error)||'Request failed.';
+      // v5.2: "Unknown action" = the Web App URL still runs an OLD Code.gs version.
+      if(/^Unknown action/i.test(msg)){ showServerOutdated(); msg=SERVER_OUTDATED_MSG; }
+      const err=new Error(msg);
       err.code=(data&&data.code)||'';
       throw err;
     }
@@ -612,7 +626,25 @@ function clearPageParams(){
 }
 
 // Wake the Apps Script container early so the first submit is faster (not needed when served by Apps Script).
-function warmUpServer(){ if(!IN_APPS_SCRIPT&&isGASConfigured()) api({action:'health'},20000).catch(()=>{}); }
+// v5.2: also checks that the server runs Code.gs v5.2 (it returns build "5.2").
+const REQUIRED_SERVER_BUILD='5.2';
+const SERVER_OUTDATED_MSG='The server (Apps Script Web App) is running an OLD version of Code.gs, so login and approvals cannot work yet. '+
+  'Admin: open the Apps Script editor as finance.communication@grayquest.com → Deploy → Manage deployments → Edit (pencil) on the EXISTING deployment → Version: "New version" → Deploy. Then refresh this page (Ctrl+F5).';
+function showServerOutdated(){
+  if(document.getElementById('server-outdated'))return;
+  const box=document.createElement('div');
+  box.id='server-outdated';
+  box.className='server-outdated';
+  box.innerHTML='<i class="ti ti-alert-octagon"></i> <b>Server update pending.</b> '+escapeHtml(SERVER_OUTDATED_MSG);
+  const tabs=document.querySelector('.tabs');
+  if(tabs&&tabs.parentNode) tabs.parentNode.insertBefore(box,tabs);
+}
+function warmUpServer(){
+  if(IN_APPS_SCRIPT||!isGASConfigured())return;
+  api({action:'health'},20000)
+    .then(d=>{ if(!(parseFloat(d&&d.build)>=parseFloat(REQUIRED_SERVER_BUILD))) showServerOutdated(); })
+    .catch(e=>{ if(/old version/i.test((e&&e.message)||'')) showServerOutdated(); });
+}
 
 /* ==========================================================
  * EXCEL / CSV ATTACHMENT
@@ -754,7 +786,9 @@ function getNbfc(){
 // approval a team is added to the same email thread. Keep the same as TYPE_RULES in Code.gs.
 const TYPE_RULES=[
   {types:['Late Payment Charges Waiver','Mandate Charges Waiver','Bounce Charges Waiver'],
-   authority:'ranjeet@grayquest.com', informTeam:'NACH Team (Pranit, Ajinkya)'},
+   authority:'ranjeet@grayquest.com', informTeam:'NACH Team (Pranit, Ajinkya)',
+   // v5.2: matches onApproved.directMail in Code.gs
+   informText:'After approval, an email goes to <b>NACH Team (Pranit, Ajinkya)</b> to pass the refund entry, with <b>GQRecon</b> in CC.'},
   {types:['Settlement Waiver'],
    authority:'ranjeet@grayquest.com', informTeam:'Sakshee Thanekar'}
 ];
@@ -788,7 +822,7 @@ function refreshAuthority(deptChanged){
     sel.value=rule.authority;
     if(hint) hint.textContent='🔒 set by Type';
     if(note){
-      note.innerHTML=`<i class="ti ti-info-circle"></i> <b>${escapeHtml(getTyp())}</b> is approved only by <b>${escapeHtml(mgrNames[rule.authority]||rule.authority)}</b>. After approval, <b>${escapeHtml(rule.informTeam)}</b> will be informed in the same email.`;
+      note.innerHTML=`<i class="ti ti-info-circle"></i> <b>${escapeHtml(getTyp())}</b> is approved only by <b>${escapeHtml(mgrNames[rule.authority]||rule.authority)}</b>. ${rule.informText||`After approval, <b>${escapeHtml(rule.informTeam)}</b> will be informed in the same email.`}`;
       note.style.display='block';
     }
     return;
@@ -1106,6 +1140,9 @@ function applyLoggedIn(info){
     if(adminBadge)adminBadge.style.display='none';
     if(adminBtn)adminBtn.style.display='none';
   }
+  // v5.2: Admin sees every request and gets the "Approve All Pending" button.
+  const approveAllBtn=document.getElementById('btn-approve-all');
+  if(approveAllBtn) approveAllBtn.style.display=isAdmin(email)?'':'none';
 }
 
 function applyLoggedOut(){
@@ -1118,6 +1155,8 @@ function applyLoggedOut(){
   document.getElementById('tab-logout').style.display='none';
   document.getElementById('tab-login').style.display='';
   document.getElementById('hdr-sheet-line').style.display='none';
+  const approveAllBtn=document.getElementById('btn-approve-all');   // v5.2
+  if(approveAllBtn) approveAllBtn.style.display='none';
   updBadge();
 }
 
@@ -1320,6 +1359,7 @@ function renderReqs(){
         <div><div class="ml">Department</div><div class="mv">${escapeHtml(r.dept||'—')}</div></div>
       </div>
       <div class="remarks"><i class="ti ti-message"></i> ${escapeHtml(r.rmk)}</div>
+      ${isAdmin(currentIdentity)?`<div class="status-line"><span class="authority-chip"><i class="ti ti-user-shield"></i> Authority: ${escapeHtml(mgrNames[r.mgEmail]||r.mgEmail)}</span></div>`:''}
       ${r.hasAttachment?`<div style="font-size:12px;color:#007FFF;margin-top:6px;background:#e5f2ff;border:1px solid #b3d9ff;border-radius:6px;padding:6px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-file-spreadsheet"></i> Excel attached: ${escapeHtml(r.attachmentName||'batch file')}</div>`:''}
       ${st==='Rejected'&&r.rejectComment?`<div class="rejnote"><i class="ti ti-alert-circle"></i> <strong>Rejection reason:</strong> ${escapeHtml(r.rejectComment)}</div>`:''}
       ${st==='Pending'?`
@@ -1471,6 +1511,95 @@ function applyActionResult(res,comment){
 }
 
 /* ==========================================================
+ * v5.2: ADMIN — APPROVE ALL PENDING REQUESTS
+ * Sent in small batches so a long list never times out.
+ * The server checks again that the logged-in user is the Admin.
+ * ========================================================== */
+const APPROVE_ALL_BATCH=20;
+async function adminApproveAllPending(){
+  if(!isAdmin(currentIdentity)){ showActionPopup('error','Only the Admin can approve all requests.'); return; }
+  const loading=showBusyPopup('Loading the latest requests…');
+  const loaded=await loadRequestsFromSheet(true);
+  loading.remove();
+  if(!loaded){ showActionPopup('error','Could not load the latest requests from the Sheet. Please refresh and try again.'); return; }
+
+  const byId=new Map();
+  reqs.forEach(r=>{ if(r&&r.id) byId.set(String(r.id).trim(),r); });   // later rows win, like the server
+  const pending=[...byId.values()].filter(r=>String(r.status||'Pending')==='Pending');
+  if(!pending.length){ showActionPopup('info','There are no pending requests to approve.'); return; }
+
+  const total=pending.reduce((s,r)=>s+(Number(r.amt)||0),0);
+  const byAuth={};
+  pending.forEach(r=>{
+    const k=mgrNames[r.mgEmail]||r.mgEmail||'Unassigned';
+    byAuth[k]=byAuth[k]||{n:0,amt:0};
+    byAuth[k].n++; byAuth[k].amt+=Number(r.amt)||0;
+  });
+  const rows=Object.entries(byAuth).map(([k,v])=>
+    `<tr><td style="padding:5px 0">${escapeHtml(k)}</td><td style="padding:5px 0;text-align:right">${v.n}</td><td style="padding:5px 0;text-align:right">₹${v.amt.toLocaleString('en-IN')}</td></tr>`).join('');
+
+  const ok=await new Promise(resolve=>{
+    const modal=document.createElement('div');
+    modal.className='modal-ov';
+    modal.innerHTML=`
+      <div class="modal-box" style="text-align:left;max-width:480px">
+        <div class="popup-title"><i class="ti ti-checks"></i> Approve All Pending Requests</div>
+        <div style="font-size:13px;color:#555;margin-bottom:12px">You are approving as <b>Admin</b>. This approves <b>${pending.length}</b> request(s) totalling <b>₹${total.toLocaleString('en-IN')}</b> and sends the confirmation emails. This cannot be undone.</div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse;margin-bottom:6px">
+          <thead><tr style="color:#888;font-size:11px;text-transform:uppercase"><th style="text-align:left;padding-bottom:4px">Authority</th><th style="text-align:right">Count</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button id="aa-cancel" style="flex:1;background:#f0f0ec;border:none;border-radius:8px;padding:9px;font-size:13px;cursor:pointer;font-weight:600">Cancel</button>
+          <button id="aa-ok" style="flex:1;background:#15803d;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;cursor:pointer;font-weight:700">Approve All (${pending.length})</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#aa-cancel').onclick=()=>{ modal.remove(); resolve(false); };
+    modal.querySelector('#aa-ok').onclick=()=>{ modal.remove(); resolve(true); };
+  });
+  if(!ok) return;
+
+  const btn=document.getElementById('btn-approve-all');
+  if(btn) btn.disabled=true;
+  const ids=pending.map(r=>r.id);
+  const busy=showBusyPopup(`Approving ${ids.length} request(s)…`);
+  const busyText=busy.querySelector('.modal-box div');
+  let approved=0;
+  const skipped=[], emailErrors=[];
+  let stopError='';
+  try{
+    for(let i=0;i<ids.length;i+=APPROVE_ALL_BATCH){
+      const part=ids.slice(i,i+APPROVE_ALL_BATCH);
+      if(busyText) busyText.textContent=`Approving ${Math.min(i+part.length,ids.length)} of ${ids.length} request(s)…`;
+      try{
+        const res=await api({action:'actionRequests',ids:part,status:'Approved',rejectReason:''},300000);
+        applyActionResult(res,'');
+        approved+=(res.updated||[]).length;
+        (res.skipped||[]).forEach(s=>skipped.push(s));
+        if((res.updated||[]).length&&!res.emailSent) emailErrors.push(res.emailError||'unknown error');
+      }catch(e){
+        if(e.code==='LOGIN_REQUIRED'){ clearSession(); applyLoggedOut(); }
+        stopError=e.message||'Request failed.';
+        break;
+      }
+    }
+  }finally{
+    busy.remove();
+    if(btn) btn.disabled=false;
+  }
+
+  let msg=`<div class="popup-title">Approve All — Done</div><b>${approved}</b> request(s) have been <b>APPROVED</b>.`;
+  if(approved&&!emailErrors.length) msg+=' Confirmation emails have been sent.';
+  if(emailErrors.length) msg+=`<br><br>The Sheet is updated, but some emails failed:<br>${escapeHtml([...new Set(emailErrors)].join(' | '))}`;
+  if(skipped.length){
+    msg+=`<br><br>Skipped (${skipped.length}):<br>`+skipped.slice(0,10).map(s=>`${escapeHtml(s.id)} — ${escapeHtml(s.reason||s.status)}`).join('<br>')+(skipped.length>10?'<br>…':'');
+  }
+  if(stopError) msg+=`<br><br><span style="color:#dc2626">Stopped early: ${escapeHtml(stopError)}</span>`;
+  showActionPopup(stopError||emailErrors.length?'info':'approved',msg);
+}
+
+/* ==========================================================
  * RAISE REQUEST — ONE server call: save rows + send approval email
  * ========================================================== */
 async function raise(){
@@ -1489,7 +1618,20 @@ async function raise(){
   const tokOk=document.getElementById('tok-ok');
   const tokErr=document.getElementById('tok-err');
   tokOk.style.display='none'; tokErr.style.display='none';
-  const fail=msg=>{ tokErr.textContent=msg; tokErr.style.display='block'; };
+  const fail=msg=>{
+    tokErr.textContent=msg; tokErr.style.display='block';
+    showActionPopup('error','<div class="popup-title">Request not submitted</div>'+escapeHtml(msg));   // v5.2 popup
+  };
+
+  // v5.2: list EVERY incomplete field in one popup and highlight them in red.
+  document.querySelectorAll('.field-error').forEach(el=>el.classList.remove('field-error'));
+  const missing=findIncompleteFields(isBatch);
+  if(missing.length){
+    tokErr.textContent='Please complete: '+missing.map(m=>m.label).join(', ')+'.';
+    tokErr.style.display='block';
+    showIncompletePopup(missing);
+    return;
+  }
 
   if(!spoc){ document.getElementById('spoc').focus(); return fail('Raised By (Mail ID) is mandatory. Please enter your email.'); }
   if(!isValidEmail(spoc)||!/@grayquest\.com$/i.test(spoc)){ document.getElementById('spoc').focus(); return fail('Raised By (Mail ID) must be a valid @grayquest.com email.'); }
@@ -1540,6 +1682,16 @@ async function raise(){
     tokOk.style.display='block';
     if(problems.length){ tokErr.textContent=problems.join(' · '); tokErr.style.display='block'; }
 
+    // v5.2: success popup
+    const totalAmt=items.reduce((s,x)=>s+(Number(x.amount)||0),0);
+    showActionPopup(res.emailSent&&!problems.length?'approved':'info',
+      '<div class="popup-title">Request submitted successfully</div>'+
+      `${ids.length} request(s) saved: <b>${escapeHtml(idText)}</b><br>`+
+      `Total amount: <b>₹${totalAmt.toLocaleString('en-IN')}</b><br>`+
+      `Approval Authority: <b>${escapeHtml(authorityName)}</b><br>`+
+      (res.emailSent?'Approval email sent — you are in CC.':'<span style="color:#dc2626">The approval email was not sent.</span>')+
+      (problems.length?`<br><br><span style="color:#b45309">${problems.map(p=>escapeHtml(p)).join('<br>')}</span>`:''));
+
     document.getElementById('appId').value='';
     document.getElementById('amt').value='';
     document.getElementById('rmk').value='';
@@ -1552,6 +1704,44 @@ async function raise(){
     sbtn.disabled=false;
     sbtn.innerHTML='<i class="ti ti-send"></i> Submit for Approval';
   }
+}
+
+// v5.2: returns every required field that is still empty: [{label, el}]
+function findIncompleteFields(isBatch){
+  const out=[];
+  const el=id=>document.getElementById(id);
+  const val=id=>String((el(id)&&el(id).value)||'').trim();
+  const add=(label,id)=>out.push({label,el:el(id)});
+  if(!val('spoc')) add('Raised By (Mail ID)','spoc');
+  if(!isBatch&&!val('appId')) add('App ID / Loan ID (or attach Excel)','appId');
+  if(!val('nbfc')) add('NBFC / Lender','nbfc');
+  else if(val('nbfc')==='other'&&!val('nbfcOther')) add('NBFC / Lender name (Other)','nbfcOther');
+  if(!isBatch&&!val('amt')) add('Approval Amount (₹)','amt');
+  if(!val('typ')) add('Type','typ');
+  else if(val('typ')==='other'&&!val('typOther')) add('Type (Other)','typOther');
+  if(!val('rmk')) add('Remarks / Reason for Approval','rmk');
+  if(!val('department')) add('Department / Team','department');
+  else if(val('department')==='other'&&!val('deptOther')) add('Department / Team name (Other)','deptOther');
+  if(val('department')&&!val('mgEmail')) add('Approval Authority','mgEmail');
+  if(val('ccSelect')==='other'&&!val('ccEmail')) add('CC Email (Other)','ccEmail');
+  return out;
+}
+
+// v5.2: popup listing the incomplete fields; the fields are outlined in red until filled.
+function showIncompletePopup(missing){
+  missing.forEach(m=>{
+    if(!m.el)return;
+    m.el.classList.add('field-error');
+    const clear=()=>m.el.classList.remove('field-error');
+    m.el.addEventListener('input',clear,{once:true});
+    m.el.addEventListener('change',clear,{once:true});
+  });
+  showActionPopup('error',
+    '<div class="popup-title">Please complete all required fields</div>'+
+    `${missing.length} field(s) are incomplete:`+
+    `<ul class="popup-list">${missing.map(m=>`<li>${escapeHtml(m.label)}</li>`).join('')}</ul>`);
+  const first=missing.find(m=>m.el&&!m.el.disabled);
+  if(first) try{ first.el.focus({preventScroll:false}); }catch(e){}
 }
 
 function sync(msg,type){
