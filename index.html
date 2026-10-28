@@ -2,7 +2,7 @@
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="2026.10.28-v5.2-admin-popups-nach">
+<meta name="app-version" content="2026.10.28-v5.3-charges-dept-optional-same-thread">
 <title>Loan Closure Approval System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
@@ -259,7 +259,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
       <div class="fg full"><label>Remarks / Reason for Approval</label>
         <textarea id="rmk" placeholder="Explain why manager approval is needed for this amount..."></textarea>
       </div>
-      <div class="fg"><label>Department / Team</label>
+      <div class="fg"><label>Department / Team <span id="deptOptionalHint" style="display:none;text-transform:none;letter-spacing:0;color:#15803d;font-weight:600">(optional for charges waivers)</span></label>
         <select id="department" onchange="handleDeptChange(this.value)">
           <option value="">Select department</option>
           <option>GQ Finance Operation</option>
@@ -627,7 +627,7 @@ function clearPageParams(){
 
 // Wake the Apps Script container early so the first submit is faster (not needed when served by Apps Script).
 // v5.2: also checks that the server runs Code.gs v5.2 (it returns build "5.2").
-const REQUIRED_SERVER_BUILD='5.2';
+const REQUIRED_SERVER_BUILD='5.3';
 const SERVER_OUTDATED_MSG='The server (Apps Script Web App) is running an OLD version of Code.gs, so login and approvals cannot work yet. '+
   'Admin: open the Apps Script editor as finance.communication@grayquest.com → Deploy → Manage deployments → Edit (pencil) on the EXISTING deployment → Version: "New version" → Deploy. Then refresh this page (Ctrl+F5).';
 function showServerOutdated(){
@@ -788,7 +788,8 @@ const TYPE_RULES=[
   {types:['Late Payment Charges Waiver','Mandate Charges Waiver','Bounce Charges Waiver'],
    authority:'ranjeet@grayquest.com', informTeam:'NACH Team (Pranit, Ajinkya)',
    // v5.2: matches onApproved.directMail in Code.gs
-   informText:'After approval, an email goes to <b>NACH Team (Pranit, Ajinkya)</b> to pass the refund entry, with <b>GQRecon</b> in CC.'},
+   deptOptional:true,   // v5.3: Department / Team not required (same as Code.gs)
+   informText:'After approval, <b>NACH Team (Pranit, Ajinkya)</b> and <b>GQRecon</b> are added to the same email trail. If rejected, NACH Team is not mailed.'},
   {types:['Settlement Waiver'],
    authority:'ranjeet@grayquest.com', informTeam:'Sakshee Thanekar'}
 ];
@@ -811,6 +812,10 @@ function refreshAuthority(deptChanged){
   const note=document.getElementById('typeRuleNote');
   const dept=document.getElementById('department').value;
   const rule=typeRuleFor(getTyp());
+  // v5.3: show "(optional for charges waivers)" next to Department / Team
+  const deptHint=document.getElementById('deptOptionalHint');
+  if(deptHint) deptHint.style.display=(rule&&rule.deptOptional)?'inline':'none';
+  if(rule&&rule.deptOptional){ const dEl=document.getElementById('department'); if(dEl) dEl.classList.remove('field-error'); }
   const lockStyle=locked=>{
     sel.disabled=locked;
     sel.style.background=locked?'#f0f0ec':'#fffbeb';
@@ -1642,7 +1647,8 @@ async function raise(){
   }else if(!singleAmt||singleAmt<=0) return fail('Please enter a valid Approval Amount.');
   if(!typ) return fail('Please select Type.');
   if(!rmk) return fail('Please enter Remarks / Reason for approval.');
-  if(!dept) return fail('Please select Department / Team.');
+  const typRuleNow=typeRuleFor(typ);   // v5.3: Department optional for charges waivers
+  if(!dept&&!(typRuleNow&&typRuleNow.deptOptional)) return fail('Please select Department / Team.');
   if(!mgEmail) return fail('Please select an Approval Authority.');
   if(!isGASConfigured()) return fail('Apps Script URL is not configured.');
 
@@ -1720,8 +1726,12 @@ function findIncompleteFields(isBatch){
   if(!val('typ')) add('Type','typ');
   else if(val('typ')==='other'&&!val('typOther')) add('Type (Other)','typOther');
   if(!val('rmk')) add('Remarks / Reason for Approval','rmk');
-  if(!val('department')) add('Department / Team','department');
-  else if(val('department')==='other'&&!val('deptOther')) add('Department / Team name (Other)','deptOther');
+  const rule=typeRuleFor(getTyp());
+  const deptOptional=!!(rule&&rule.deptOptional);   // v5.3: charges waivers need no Department / Team
+  if(!deptOptional){
+    if(!val('department')) add('Department / Team','department');
+    else if(val('department')==='other'&&!val('deptOther')) add('Department / Team name (Other)','deptOther');
+  }
   if(val('department')&&!val('mgEmail')) add('Approval Authority','mgEmail');
   if(val('ccSelect')==='other'&&!val('ccEmail')) add('CC Email (Other)','ccEmail');
   return out;
