@@ -2,7 +2,7 @@
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="2026.11.02-v5.8-login-note-removed">
+<meta name="app-version" content="2026.11.02-v5.9-bhavik-support">
 <title>Loan Closure Approval System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
@@ -285,6 +285,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
           <option value="finance.communication@grayquest.com">GQ Finance Communication — finance.communication@grayquest.com</option>
           <option value="garvit@grayquest.com">Garvit Mathur — garvit@grayquest.com</option>
           <option value="imran.abdul@grayquest.com">Imran Abdul — imran.abdul@grayquest.com</option>
+          <option value="bhavik.ajugiya@grayquest.com">Bhavik Ajugiya — bhavik.ajugiya@grayquest.com</option>
         </select>
       </div>
       <div class="fg"><label>Your Email (CC)</label>
@@ -495,7 +496,8 @@ const mgrNames={
   'ranjeet@grayquest.com'              :'Ranjeet Singh Rawat',
   'finance.communication@grayquest.com':'GQ Finance Communication',
   'garvit@grayquest.com'               :'Garvit Mathur',
-  'imran.abdul@grayquest.com'          :'Imran Abdul'
+  'imran.abdul@grayquest.com'          :'Imran Abdul',
+  'bhavik.ajugiya@grayquest.com'       :'Bhavik Ajugiya'
 };
 
 const deptToAuthority={
@@ -504,7 +506,7 @@ const deptToAuthority={
   'Collection'          :'ranjeet@grayquest.com',
   'KAM'                 :'aamir.khan@grayquest.com',
   'Recovery'            :'ranjeet@grayquest.com',
-  'Support'             :'garvit@grayquest.com',
+  'Support'             :'bhavik.ajugiya@grayquest.com',   // v5.9: Support approved by Bhavik Ajugiya (was Garvit Mathur)
   'Disbursement'        :'garvit@grayquest.com',
   'NACH'                :'aamir.khan@grayquest.com',   // v5.6: NACH approved by Aamir Khan (was Imran Abdul)
   'SALES'               :'aamir.khan@grayquest.com'
@@ -1095,7 +1097,8 @@ const AUTHORITY_LIST={
   'ranjeet@grayquest.com'              :'Ranjeet Singh Rawat',
   'finance.communication@grayquest.com':'GQ Finance Communication (Admin)',
   'garvit@grayquest.com'               :'Garvit Mathur',
-  'imran.abdul@grayquest.com'          :'Imran Abdul'
+  'imran.abdul@grayquest.com'          :'Imran Abdul',
+  'bhavik.ajugiya@grayquest.com'       :'Bhavik Ajugiya'
 };
 function isApprovalAuthority(email){ return Object.prototype.hasOwnProperty.call(AUTHORITY_LIST,String(email||'').trim().toLowerCase()); }
 
