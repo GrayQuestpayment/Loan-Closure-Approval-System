@@ -2,7 +2,7 @@
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="2026.10.28-v5.3-charges-dept-optional-same-thread">
+<meta name="app-version" content="2026.11.02-v5.7-text-updates">
 <title>Loan Closure Approval System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
@@ -185,9 +185,9 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
   <div id="p-raise" class="panel active">
     <div id="tok-ok" class="toast ts"></div>
     <div id="tok-err" class="toast td"></div>
-    <div class="sheet-note"><i class="ti ti-mail-check"></i> When your request is submitted, you will receive a confirmation email from <b>GQ Finance Communication</b> (finance.communication@grayquest.com).</div>
+    <div class="sheet-note"><i class="ti ti-mail-check"></i> When your request is submitted, you will receive a confirmation email from <b>GQ Finance Communication</b> (finance.communication@grayquest.com)</div>
     <div class="form-grid">
-      <div class="fg full"><label for="spoc">Raised By (Mail ID) <span style="color:#dc2626">*</span></label>
+      <div class="fg full"><label for="spoc">Raised By (E-mail ID) <span style="color:#dc2626">*</span></label>
         <input type="email" id="spoc" required autocomplete="email" placeholder="Enter your email (e.g. yourname@grayquest.com)">
       </div>
       <div class="fg"><label>App ID / Loan ID</label>
@@ -201,7 +201,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
             <span id="appIdFileSize" style="color:#60a5fa;font-size:11px"></span>
             <i class="ti ti-x" onclick="clearAppIdFile()" style="cursor:pointer;color:#dc2626"></i>
           </div>
-          <div style="font-size:10px;color:#aaa;margin-top:3px">Upload Excel with <b>App ID</b> in column 1 and <b>Amount</b> in column 2. Every row will be added to the Google Sheet, including duplicates. Max 5 MB.</div>
+          <div style="font-size:10px;color:#aaa;margin-top:3px">Upload Excel with <b>App ID</b> in column 1 and <b>Amount</b> in column 2. Max 5 MB.</div>
           <button type="button" onclick="downloadSampleAppIdExcel()" style="margin-top:7px;background:#fff;border:1px solid #007FFF;color:#007FFF;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit"><i class="ti ti-download"></i> Download Sample App ID Excel</button>
         </div>
       </div>
@@ -257,7 +257,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
         <div id="typeRuleNote" style="display:none;margin-top:6px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:12px;color:#1e3a8a"></div>
       </div>
       <div class="fg full"><label>Remarks / Reason for Approval</label>
-        <textarea id="rmk" placeholder="Explain why manager approval is needed for this amount..."></textarea>
+        <textarea id="rmk" placeholder="Specify the reason for approval (e.g. loan closure shortfall, charges waiver)..."></textarea>
       </div>
       <div class="fg"><label>Department / Team <span id="deptOptionalHint" style="display:none;text-transform:none;letter-spacing:0;color:#15803d;font-weight:600">(optional for charges waivers)</span></label>
         <select id="department" onchange="handleDeptChange(this.value)">
@@ -442,7 +442,7 @@ input:focus,select:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3p
     <div class="security-banner">
       <i class="ti ti-shield-check"></i>
       <strong>Approval rule:</strong> a request can be actioned only while its status is <b>Pending</b>. After approval or rejection, the opposite action is blocked.
-      NACH requests are assigned to <b>Imran Abdul</b> only.
+      NACH requests are assigned to <b>Aamir Khan</b>.
     </div>
 
     <div class="kpi-grid">
@@ -507,7 +507,7 @@ const deptToAuthority={
   'Recovery'            :'ranjeet@grayquest.com',
   'Support'             :'garvit@grayquest.com',
   'Disbursement'        :'garvit@grayquest.com',
-  'NACH'                :'imran.abdul@grayquest.com',
+  'NACH'                :'aamir.khan@grayquest.com',   // v5.6: NACH approved by Aamir Khan (was Imran Abdul)
   'SALES'               :'aamir.khan@grayquest.com'
 };
 
@@ -1638,8 +1638,8 @@ async function raise(){
     return;
   }
 
-  if(!spoc){ document.getElementById('spoc').focus(); return fail('Raised By (Mail ID) is mandatory. Please enter your email.'); }
-  if(!isValidEmail(spoc)||!/@grayquest\.com$/i.test(spoc)){ document.getElementById('spoc').focus(); return fail('Raised By (Mail ID) must be a valid @grayquest.com email.'); }
+  if(!spoc){ document.getElementById('spoc').focus(); return fail('Raised By (E-mail ID) is mandatory. Please enter your email.'); }
+  if(!isValidEmail(spoc)||!/@grayquest\.com$/i.test(spoc)){ document.getElementById('spoc').focus(); return fail('Raised By (E-mail ID) must be a valid @grayquest.com email.'); }
   if(!isBatch&&!typedAppId) return fail('Please enter App ID or attach an Excel.');
   if(!nbfc) return fail('Please select NBFC / Lender.');
   if(isBatch){
@@ -1718,7 +1718,7 @@ function findIncompleteFields(isBatch){
   const el=id=>document.getElementById(id);
   const val=id=>String((el(id)&&el(id).value)||'').trim();
   const add=(label,id)=>out.push({label,el:el(id)});
-  if(!val('spoc')) add('Raised By (Mail ID)','spoc');
+  if(!val('spoc')) add('Raised By (E-mail ID)','spoc');
   if(!isBatch&&!val('appId')) add('App ID / Loan ID (or attach Excel)','appId');
   if(!val('nbfc')) add('NBFC / Lender','nbfc');
   else if(val('nbfc')==='other'&&!val('nbfcOther')) add('NBFC / Lender name (Other)','nbfcOther');
